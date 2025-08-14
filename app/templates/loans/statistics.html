@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Thống kê mượn trả - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-graph-up"></i> Thống kê mượn trả sách
+        </h1>
+    </div>
+</div>
+
+<!-- Overview statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <i class="bi bi-journal-text" style="font-size: 2rem;"></i>
+                <h3 class="card-title mt-2">{{ total_loans }}</h3>
+                <p class="card-text mb-0">Tổng số giao dịch</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <i class="bi bi-clock" style="font-size: 2rem;"></i>
+                <h3 class="card-title mt-2">{{ active_loans }}</h3>
+                <p class="card-text mb-0">Đang mượn</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                <h3 class="card-title mt-2">{{ returned_loans }}</h3>
+                <p class="card-text mb-0">Đã trả</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-warning text-dark">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                <h3 class="card-title mt-2">{{ overdue_loans }}</h3>
+                <p class="card-text mb-0">Quá hạn</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popular books -->
+{% if popular_books %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tên sách</th>
+                    <th>Tác giả</th>
+                    <th>Số lần mượn</th>
+                    <th>Danh mục</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for book in popular_books %}
+                <tr>
+                    <td>
+                        <span class="badge bg-primary">{{ loop.index }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ book.title }}</strong>
+                    </td>
+                    <td>{{ book.author }}</td>
+                    <td>
+                        <span class="badge bg-success">{{ book.loan_count }}</span>
+                    </td>
+                    <td>
+                        {% if book.category %}
+                            <span class="badge bg-secondary">{{ book.category }}</span>
+                        {% else %}
+                            <span class="text-muted">Chưa phân loại</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-center text-muted">
+        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+        <p class="mt-2">Chưa có dữ liệu mượn sách</p>
+    </div>
+{% endif %}
+
+<!-- Monthly statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-calendar"></i> Thống kê theo tháng (6 tháng gần nhất)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if monthly_stats %}
+                    <div class="row">
+                        <div class="col-md-8">
+                            <canvas id="monthlyChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Tháng</th>
+                                            <th>Số lượt mượn</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in monthly_stats %}
+                                        <tr>
+                                            <td>{{ stat.month }}</td>
+                                            <td>
+                                                <span class="badge bg-info">{{ stat.loans }}</span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center mb-0">Chưa có dữ liệu thống kê theo tháng</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loan trends -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Phân bố trạng thái mượn trả
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-bar-chart"></i> So sánh các tháng
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="comparisonChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional insights -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb"></i> Phân tích và gợi ý
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Phân tích:</h6>
+                        <ul class="mb-0">
+                            <li>Tổng số giao dịch: <strong>{{ total_loans }}</strong></li>
+                            <li>Tỷ lệ trả sách đúng hạn: <strong>{{ (returned_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</strong></li>
+                            <li>Tỷ lệ sách quá hạn: <strong>{{ (overdue_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</strong></li>
+                            <li>Trung bình mượn/tháng: <strong>{{ (total_loans / 6)|round(1) }}</strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Gợi ý:</h6>
+                        <ul class="mb-0">
+                            {% if overdue_loans > 0 %}
+                                <li class="text-warning">Cần xử lý {{ overdue_loans }} cuốn sách quá hạn</li>
+                            {% endif %}
+                            {% if active_loans > returned_loans %}
+                                <li class="text-info">Nhiều sách đang được mượn, cần theo dõi</li>
+                            {% endif %}
+                            {% if total_loans > 0 %}
+                                <li class="text-success">Hệ thống hoạt động ổn định</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Monthly statistics chart
+{% if monthly_stats %}
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+const monthlyChart = new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ monthly_stats|map(attribute='month')|list|tojson }},
+        datasets: [{
+            label: 'Số lượt mượn',
+            data: {{ monthly_stats|map(attribute='loans')|list|tojson }},
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'Xu hướng mượn sách theo tháng'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+{% endif %}
+
+// Status distribution chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Đang mượn', 'Đã trả', 'Quá hạn'],
+        datasets: [{
+            data: [{{ active_loans }}, {{ returned_loans }}, {{ overdue_loans }}],
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 205, 86, 0.8)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 205, 86, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Comparison chart
+const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+const comparisonChart = new Chart(comparisonCtx, {
+    type: 'bar',
+    data: {
+        labels: ['Đang mượn', 'Đã trả', 'Quá hạn'],
+        datasets: [{
+            label: 'Số lượng',
+            data: [{{ active_loans }}, {{ returned_loans }}, {{ overdue_loans }}],
+            backgroundColor: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 205, 86, 0.8)'
+            ],
+            borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 205, 86, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Không tìm thấy trang - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="py-5">
+            <i class="bi bi-exclamation-triangle text-warning" style="font-size: 6rem;"></i>
+            <h1 class="display-1 text-muted">404</h1>
+            <h2 class="h3 mb-4">Không tìm thấy trang</h2>
+            <p class="lead text-muted mb-4">
+                Trang bạn đang tìm kiếm không tồn tại hoặc đã bị di chuyển.
+            </p>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Có thể bạn muốn:</h6>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('books.index') }}" class="btn btn-primary">
+                                    <i class="bi bi-house"></i> Về trang chủ
+                                </a>
+                                <a href="{{ url_for('books.search') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-search"></i> Tìm kiếm sách
+                                </a>
+                                <a href="{{ url_for('books.categories') }}" class="btn btn-outline-success">
+                                    <i class="bi bi-collection"></i> Xem danh mục
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại trang trước
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Sách đã mượn - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-journal-text"></i> Sách đã mượn
+        </h1>
+    </div>
+</div>
+
+<!-- Loan statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <i class="bi bi-book" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">{{ loans.total if loans.total else 0 }}</h5>
+                <p class="card-text mb-0">Tổng số lần mượn</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <i class="bi bi-clock" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">{{ borrowed_count }}</h5>
+                <p class="card-text mb-0">Đang mượn</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">{{ returned_count }}</h5>
+                <p class="card-text mb-0">Đã trả</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-warning text-dark">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">{{ overdue_count }}</h5>
+                <p class="card-text mb-0">Quá hạn</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loans list -->
+{% if loans.items %}
+    <div class="card shadow">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list-ul"></i> Danh sách mượn trả
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Sách</th>
+                            <th>Ngày mượn</th>
+                            <th>Hạn trả</th>
+                            <th>Trạng thái</th>
+                            <th>Ghi chú</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans.items %}
+                        <tr class="{% if loan.is_overdue() and loan.status == 'borrowed' %}table-warning{% endif %}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="book-icon me-3">
+                                        <i class="bi bi-book text-primary" style="font-size: 1.5rem;"></i>
+                                    </div>
+                                    <div>
+                                        <a href="{{ url_for('books.book_detail', book_id=loan.book.id) }}" class="text-decoration-none fw-bold">
+                                            {{ loan.book.title }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ loan.book.author }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if loan.borrowed_date %}
+                                    {{ loan.borrowed_date.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if loan.due_date %}
+                                    <span class="{% if loan.is_overdue() and loan.status == 'borrowed' %}text-danger fw-bold{% endif %}">
+                                        {{ loan.due_date.strftime('%d/%m/%Y') }}
+                                    </span>
+                                    {% if loan.is_overdue() and loan.status == 'borrowed' %}
+                                        <br>
+                                        <small class="text-danger">
+                                            Quá hạn {{ loan.get_days_overdue() }} ngày
+                                        </small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {% if loan.status == 'borrowed' %}bg-primary{% elif loan.status == 'returned' %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ loan.get_status_display() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if loan.notes %}
+                                    {{ loan.notes }}
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    {% if loan.status == 'borrowed' %}
+                                        {% if not loan.is_overdue() %}
+                                            <form method="POST" action="{{ url_for('loans.extend_loan', loan_id=loan.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-warning btn-sm" title="Gia hạn">
+                                                    <i class="bi bi-clock"></i>
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        
+                                        <form method="POST" action="{{ url_for('loans.return_book', loan_id=loan.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-success btn-sm" title="Trả sách">
+                                                <i class="bi bi-arrow-return-left"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    <a href="{{ url_for('books.book_detail', book_id=loan.book.id) }}" class="btn btn-outline-primary btn-sm" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if loans.pages > 1 %}
+            <nav aria-label="Phân trang mượn trả" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if loans.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('loans.my_loans', page=loans.prev_num) }}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in loans.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == loans.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('loans.my_loans', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if loans.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('loans.my_loans', page=loans.next_num) }}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+    
+{% else %}
+    <!-- No loans -->
+    <div class="text-center py-5">
+        <i class="bi bi-journal-text" style="font-size: 4rem; color: #dee2e6;"></i>
+        <h3 class="text-muted mt-3">Chưa có sách nào được mượn</h3>
+        <p class="text-muted">Bạn chưa mượn sách nào từ thư viện.</p>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('books.index') }}" class="btn btn-primary me-2">
+                <i class="bi bi-book"></i> Khám phá sách
+            </a>
+            <a href="{{ url_for('books.search') }}" class="btn btn-outline-primary">
+                <i class="bi bi-search"></i> Tìm kiếm sách
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Loan information -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle"></i> Thông tin về mượn trả sách
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>Thời gian mượn mặc định: <strong>14 ngày</strong></li>
+                            <li>Có thể gia hạn thêm: <strong>7 ngày</strong></li>
+                            <li>Giới hạn mượn: <strong>5 cuốn sách</strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>Trả sách đúng hạn: <strong>Không phí</strong></li>
+                            <li>Trả sách quá hạn: <strong>Phí phạt</strong></li>
+                            <li>Gia hạn: <strong>Chỉ khi chưa quá hạn</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue warning -->
+{% if overdue_loans_list %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-warning" role="alert">
+            <h6 class="alert-heading">
+                <i class="bi bi-exclamation-triangle"></i> Cảnh báo sách quá hạn
+            </h6>
+            <p class="mb-0">
+                Bạn có <strong>{{ overdue_loans_list|length }}</strong> cuốn sách đã quá hạn. 
+                Vui lòng trả sách sớm để tránh phí phạt và ảnh hưởng đến quyền mượn sách.
+            </p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

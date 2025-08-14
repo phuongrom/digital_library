@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Sách quá hạn - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-exclamation-triangle"></i> Sách quá hạn
+        </h1>
+    </div>
+</div>
+
+<!-- Overdue summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-warning" role="alert">
+            <h5 class="alert-heading">
+                <i class="bi bi-exclamation-triangle"></i> Cảnh báo sách quá hạn
+            </h5>
+            <p class="mb-0">
+                Hiện có <strong>{{ total_overdue }}</strong> cuốn sách đã quá hạn cần được xử lý. 
+                Vui lòng liên hệ với người mượn để nhắc nhở trả sách đúng hạn.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue books table -->
+{% if loans %}
+    <div class="card shadow">
+        <div class="card-header bg-warning text-dark">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Danh sách sách quá hạn
+                </h5>
+                <span class="badge bg-danger fs-6">{{ total_overdue }} cuốn</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Người mượn</th>
+                            <th>Sách</th>
+                            <th>Ngày mượn</th>
+                            <th>Hạn trả</th>
+                            <th>Số ngày quá hạn</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans %}
+                        <tr class="table-warning">
+                            <td>
+                                <div>
+                                    <strong>{{ loan.user.full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">@{{ loan.user.username }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ loan.user.email }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <a href="{{ url_for('books.book_detail', book_id=loan.book.id) }}" class="text-decoration-none">
+                                        {{ loan.book.title }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ loan.book.author }}</small>
+                                    <br>
+                                    <small class="text-muted">ISBN: {{ loan.book.isbn }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if loan.loan_date %}
+                                    {{ loan.loan_date.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="text-danger fw-bold">
+                                    {{ loan.due_date.strftime('%d/%m/%Y') if loan.due_date else 'N/A' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">
+                                    {% if loan.due_date %}
+                                        {% set days_overdue = ((moment().date() - loan.due_date.date()).days) %}
+                                        {{ days_overdue }} ngày
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <!-- Force return -->
+                                    <form method="POST" action="{{ url_for('loans.return_book', loan_id=loan.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-success btn-sm" title="Bắt buộc trả sách">
+                                            <i class="bi bi-arrow-return-left"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Send reminder -->
+                                    <button type="button" class="btn btn-warning btn-sm" title="Gửi nhắc nhở" disabled>
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
+                                    
+                                    <!-- View user profile -->
+                                    <a href="#" class="btn btn-outline-info btn-sm" title="Xem profile user">
+                                        <i class="bi bi-person"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="card shadow">
+        <div class="card-body text-center">
+            <i class="bi bi-check-circle text-success" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 text-success">Không có sách quá hạn!</h5>
+            <p class="text-muted">Tất cả sách đều được trả đúng hạn.</p>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Phân tích quá hạn -->
+{% if loans %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Phân tích quá hạn
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Số ngày quá hạn:</h6>
+                    <div class="progress mb-2" style="height: 20px;">
+                        {% set overdue_1_7 = 0 %}
+                        {% set overdue_8_30 = 0 %}
+                        {% set overdue_30_plus = 0 %}
+                        
+                        {% for loan in loans %}
+                            {% if loan.due_date %}
+                                {% set days_overdue = ((moment().date() - loan.due_date.date()).days) %}
+                                {% if days_overdue < 8 %}
+                                    {% set overdue_1_7 = overdue_1_7 + 1 %}
+                                {% elif days_overdue < 31 %}
+                                    {% set overdue_8_30 = overdue_8_30 + 1 %}
+                                {% else %}
+                                    {% set overdue_30_plus = overdue_30_plus + 1 %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% set overdue_1_7_percent = (overdue_1_7 / total_overdue * 100)|round if total_overdue > 0 else 0 %}
+                        {% set overdue_8_30_percent = (overdue_8_30 / total_overdue * 100)|round if total_overdue > 0 else 0 %}
+                        {% set overdue_30_plus_percent = (overdue_30_plus / total_overdue * 100)|round if total_overdue > 0 else 0 %}
+                        
+                        <div class="progress-bar bg-success" style="width: {{ overdue_1_7_percent }}%">{{ overdue_1_7_percent }}%</div>
+                        <div class="progress-bar bg-warning" style="width: {{ overdue_8_30_percent }}%">{{ overdue_8_30_percent }}%</div>
+                        <div class="progress-bar bg-danger" style="width: {{ overdue_30_plus_percent }}%">{{ overdue_30_plus_percent }}%</div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-success">1-7 ngày ({{ overdue_1_7 }})</small>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-warning">8-30 ngày ({{ overdue_8_30 }})</small>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-danger">30+ ngày ({{ overdue_30_plus }})</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Gợi ý xử lý
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    {% if overdue_30_plus > 0 %}
+                        <li class="text-danger mb-2">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>{{ overdue_30_plus }} cuốn sách quá hạn trên 30 ngày</strong> - Cần xử lý ngay lập tức
+                        </li>
+                    {% endif %}
+                    {% if overdue_8_30 > 0 %}
+                        <li class="text-warning mb-2">
+                            <i class="bi bi-exclamation-circle"></i>
+                            <strong>{{ overdue_8_30 }} cuốn sách quá hạn 8-30 ngày</strong> - Gửi nhắc nhở khẩn cấp
+                        </li>
+                    {% endif %}
+                    {% if overdue_1_7 > 0 %}
+                        <li class="text-info mb-2">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>{{ overdue_1_7 }} cuốn sách quá hạn 1-7 ngày</strong> - Gửi nhắc nhở nhẹ nhàng
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

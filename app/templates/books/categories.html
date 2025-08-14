@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Danh mục sách - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-collection"></i> Danh mục sách
+        </h1>
+    </div>
+</div>
+
+<!-- Categories grid -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+            {% for cat in all_categories %}
+            <div class="col">
+                <div class="card h-100 category-card">
+                    <div class="card-body text-center">
+                        <div class="category-icon">
+                            {% if cat == 'Văn học' %}
+                                <i class="bi bi-book text-primary"></i>
+                            {% elif cat == 'Khoa học' %}
+                                <i class="bi bi-flask text-success"></i>
+                            {% elif cat == 'Công nghệ' %}
+                                <i class="bi bi-laptop text-info"></i>
+                            {% elif cat == 'Lịch sử' %}
+                                <i class="bi bi-clock-history text-warning"></i>
+                            {% elif cat == 'Kinh tế' %}
+                                <i class="bi bi-graph-up text-danger"></i>
+                            {% elif cat == 'Triết học' %}
+                                <i class="bi bi-lightbulb text-secondary"></i>
+                            {% elif cat == 'Tâm lý học' %}
+                                <i class="bi bi-brain text-primary"></i>
+                            {% elif cat == 'Y học' %}
+                                <i class="bi bi-heart-pulse text-danger"></i>
+                            {% elif cat == 'Nghệ thuật' %}
+                                <i class="bi bi-palette text-warning"></i>
+                            {% elif cat == 'Thể thao' %}
+                                <i class="bi bi-trophy text-success"></i>
+                            {% elif cat == 'Du lịch' %}
+                                <i class="bi bi-geo-alt text-info"></i>
+                            {% elif cat == 'Nấu ăn' %}
+                                <i class="bi bi-cup-hot text-warning"></i>
+                            {% elif cat == 'Tự lực' %}
+                                <i class="bi bi-person-check text-success"></i>
+                            {% else %}
+                                <i class="bi bi-collection text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="card-title">{{ cat }}</h5>
+                        <div class="card-text">
+                            {% if category == cat %}
+                                <span class="badge bg-primary fs-6">Đang xem</span>
+                            {% else %}
+                                <a href="{{ url_for('books.categories', category=cat) }}" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-eye"></i> Xem sách
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Books in selected category -->
+{% if category and books %}
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>
+                    <i class="bi bi-collection"></i> Sách trong danh mục "{{ category }}"
+                </h3>
+                <span class="badge bg-primary fs-6">{{ books.total }} sách</span>
+            </div>
+            
+            <!-- Books grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4">
+                {% for book in books.items %}
+                <div class="col">
+                    <div class="card h-100 book-card">
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate" title="{{ book.title }}">
+                                <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="text-decoration-none">
+                                    {{ book.title }}
+                                </a>
+                            </h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                            
+                            <div class="mb-2">
+                                {% if book.publication_year %}
+                                    <span class="badge bg-info">{{ book.publication_year }}</span>
+                                {% endif %}
+                                <span class="badge bg-secondary">{{ book.category }}</span>
+                            </div>
+                            
+                            <p class="card-text small text-muted">
+                                {{ book.description[:100] + '...' if book.description and book.description|length > 100 else book.description or 'Chưa có mô tả' }}
+                            </p>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-book"></i> {{ book.available_copies }}/{{ book.total_copies }}
+                                </small>
+                                <span class="badge {% if book.is_available() %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ book.get_availability_status() }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="d-grid">
+                                <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i> Xem chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if books.pages > 1 %}
+            <nav aria-label="Phân trang danh mục">
+                <ul class="pagination justify-content-center">
+                    {% if books.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('books.categories', category=category, page=books.prev_num) }}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in books.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == books.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('books.categories', category=category, page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if books.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('books.categories', category=category, page=books.next_num) }}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+{% elif category %}
+    <!-- No books in category -->
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="bi bi-collection" style="font-size: 4rem; color: #dee2e6;"></i>
+                <h3 class="text-muted mt-3">Không có sách nào trong danh mục "{{ category }}"</h3>
+                <p class="text-muted">Danh mục này hiện chưa có sách hoặc tất cả sách đã bị vô hiệu hóa.</p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('books.categories') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Quay lại danh mục
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Category statistics -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-graph-up"></i> Thống kê danh mục
+                </h5>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h4 class="text-primary">{{ all_categories|length }}</h4>
+                        <p class="text-muted mb-0">Tổng số danh mục</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-success">{{ all_categories|length }}</h4>
+                        <p class="text-muted mb-0">Danh mục có sách</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-info">12</h4>
+                        <p class="text-muted mb-0">Sách mẫu</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning">3</h4>
+                        <p class="text-muted mb-0">Danh mục chính</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Popular categories -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-star"></i> Danh mục phổ biến
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Văn học</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-primary" style="width: 75%">75%</div>
+                        </div>
+                        
+                        <h6>Kinh tế</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" style="width: 60%">60%</div>
+                        </div>
+                        
+                        <h6>Khoa học</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-info" style="width: 45%">45%</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Lịch sử</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-warning" style="width: 30%">30%</div>
+                        </div>
+                        
+                        <h6>Công nghệ</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-danger" style="width: 25%">25%</div>
+                        </div>
+                        
+                        <h6>Khác</h6>
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-secondary" style="width: 15%">15%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

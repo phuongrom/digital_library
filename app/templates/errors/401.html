@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Chưa đăng nhập - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="py-5">
+            <i class="bi bi-lock text-info" style="font-size: 6rem;"></i>
+            <h1 class="display-1 text-muted">401</h1>
+            <h2 class="h3 mb-4">Chưa đăng nhập</h2>
+            <p class="lead text-muted mb-4">
+                Bạn cần đăng nhập để truy cập trang này. Vui lòng đăng nhập hoặc đăng ký tài khoản.
+            </p>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Bạn có thể:</h6>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                                </a>
+                                <a href="{{ url_for('auth.register') }}" class="btn btn-success btn-lg">
+                                    <i class="bi bi-person-plus"></i> Đăng ký tài khoản
+                                </a>
+                                <a href="{{ url_for('books.index') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-house"></i> Về trang chủ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
+                                <h6 class="mt-2">Mượn sách miễn phí</h6>
+                                <small class="text-muted">Truy cập kho tàng kiến thức</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <i class="bi bi-clock text-success" style="font-size: 2rem;"></i>
+                                <h6 class="mt-2">Truy cập 24/7</h6>
+                                <small class="text-muted">Mượn trả sách mọi lúc</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body text-center">
+                                <i class="bi bi-shield-check text-info" style="font-size: 2rem;"></i>
+                                <h6 class="mt-2">Bảo mật thông tin</h6>
+                                <small class="text-muted">Thông tin được bảo vệ</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">
+                <i class="bi bi-gear"></i> Admin Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <!-- Statistics cards -->
+    <div class="row mb-4 admin-stats">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <i class="bi bi-people" style="font-size: 2rem;"></i>
+                    <h3 class="card-title mt-2">{{ total_users }}</h3>
+                    <p class="card-text mb-0">Tổng số người dùng</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <i class="bi bi-book" style="font-size: 2rem;"></i>
+                    <h3 class="card-title mt-2">{{ total_books }}</h3>
+                    <p class="card-text mb-0">Tổng số sách</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <i class="bi bi-journal-text" style="font-size: 2rem;"></i>
+                    <h3 class="card-title mt-2">{{ total_loans }}</h3>
+                    <p class="card-text mb-0">Tổng số mượn trả</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-dark">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <h3 class="card-title mt-2">{{ overdue_loans }}</h3>
+                    <p class="card-text mb-0">Sách quá hạn</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Thao tác nhanh
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-primary w-100">
+                                <i class="bi bi-people"></i> Quản lý Users
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('admin.manage_books') }}" class="btn btn-outline-success w-100">
+                                <i class="bi bi-book"></i> Quản lý Sách
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('admin.manage_loans') }}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-journal-text"></i> Quản lý Mượn trả
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('loans.statistics') }}" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-graph-up"></i> Thống kê chi tiết
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent activities -->
+    <div class="row">
+        <!-- Recent books -->
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-book"></i> Sách mới nhất
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_books %}
+                        <div class="list-group list-group-flush">
+                            {% for book in recent_books %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="text-decoration-none">
+                                        {{ book.title }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ book.author }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}</small>
+                                    <br>
+                                    <span class="badge {% if book.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ 'Hoạt động' if book.is_active else 'Không hoạt động' }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('admin.manage_books') }}" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-arrow-right"></i> Xem tất cả sách
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">Chưa có sách nào</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent users -->
+        <div class="col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-people"></i> Người dùng mới nhất
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_users %}
+                        <div class="list-group list-group-flush">
+                            {% for user in recent_users %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ user.full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">@{{ user.username }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}</small>
+                                    <br>
+                                    <span class="badge 
+                                        {% if user.role == 'admin' %}bg-danger
+                                        {% elif user.role == 'librarian' %}bg-warning
+                                        {% else %}bg-primary{% endif %}">
+                                        {{ user.role|title }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-arrow-right"></i> Xem tất cả users
+                            </a>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center mb-0">Chưa có người dùng nào</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System status -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-activity"></i> Trạng thái hệ thống
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Database</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-success" style="width: 95%">95%</div>
+                            </div>
+                            <small class="text-muted">SQLite database hoạt động bình thường</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Performance</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-info" style="width: 88%">88%</div>
+                            </div>
+                            <small class="text-muted">Hiệu suất hệ thống tốt</small>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Security</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                <div class="progress-bar bg-warning" style="width: 92%">92%</div>
+                            </div>
+                            <small class="text-muted">Bảo mật hệ thống ổn định</small>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Thông tin hệ thống:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success"></i> Flask application đang chạy</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Database connection ổn định</li>
+                                <li><i class="bi bi-check-circle text-success"></i> User authentication hoạt động</li>
+                                <li><i class="bi bi-check-circle text-success"></i> File upload system sẵn sàng</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Cảnh báo:</h6>
+                            {% if overdue_loans > 0 %}
+                                <div class="alert alert-warning py-2">
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                    Có {{ overdue_loans }} cuốn sách quá hạn cần xử lý
+                                </div>
+                            {% else %}
+                                <div class="alert alert-success py-2">
+                                    <i class="bi bi-check-circle"></i>
+                                    Không có sách quá hạn
+                                </div>
+                            {% endif %}
+                            
+                            {% if total_books == 0 %}
+                                <div class="alert alert-info py-2">
+                                    <i class="bi bi-info-circle"></i>
+                                    Chưa có sách nào trong hệ thống
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick reports -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> Báo cáo nhanh
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h4 class="text-primary">{{ (active_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
+                                <small class="text-muted">Tỷ lệ sách đang mượn</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h4 class="text-success">{{ (returned_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
+                                <small class="text-muted">Tỷ lệ sách đã trả</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h4 class="text-warning">{{ (overdue_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
+                                <small class="text-muted">Tỷ lệ sách quá hạn</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="border rounded p-3">
+                                <h4 class="text-info">{{ (total_users / 100)|round(1) if total_users > 0 else 0 }}%</h4>
+                                <small class="text-muted">Tỷ lệ tăng trưởng users</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

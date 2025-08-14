@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Mượn trả - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">
+                <i class="bi bi-journal-text"></i> Quản lý mượn trả sách
+            </h1>
+        </div>
+    </div>
+
+    <!-- Filter options -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Lọc theo trạng thái</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="borrowed" {% if status_filter == 'borrowed' %}selected{% endif %}>Đang mượn</option>
+                                <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Đã trả</option>
+                                <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Quá hạn</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Chờ duyệt</option>
+                                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Bị từ chối</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="user" class="form-label">Lọc theo người dùng</label>
+                            <input type="text" class="form-control" id="user" name="user" placeholder="Tên user hoặc email">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Lọc
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loans table -->
+    <div class="card shadow">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Danh sách mượn trả
+                </h5>
+                <span class="badge bg-primary fs-6">{{ loans.total }} giao dịch</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Người mượn</th>
+                            <th>Sách</th>
+                            <th>Ngày mượn</th>
+                            <th>Hạn trả</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans.items %}
+                        <tr class="{% if loan.is_overdue() and loan.status == 'borrowed' %}table-warning{% endif %}">
+                            <td class="text-center fw-bold">{{ loan.id }}</td>
+                            <td>
+                                <div class="user-info">
+                                    <strong class="d-block text-truncate" title="{{ loan.user.full_name }}">{{ loan.user.full_name }}</strong>
+                                    <small class="text-muted d-block">@{{ loan.user.username }}</small>
+                                    <small class="text-muted d-block">{{ loan.user.email }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="book-info">
+                                    <a href="{{ url_for('books.book_detail', book_id=loan.book.id) }}" class="text-decoration-none d-block text-truncate" title="{{ loan.book.title }}">
+                                        {{ loan.book.title }}
+                                    </a>
+                                    <small class="text-muted d-block">{{ loan.book.author }}</small>
+                                    <small class="text-muted d-block">ISBN: {{ loan.book.isbn }}</small>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                {% if loan.borrowed_date %}
+                                    {{ loan.borrowed_date.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if loan.due_date %}
+                                    <span class="fw-bold {% if loan.is_overdue() and loan.status == 'borrowed' %}text-danger{% endif %}">
+                                        {{ loan.due_date.strftime('%d/%m/%Y') }}
+                                    </span>
+                                    {% if loan.is_overdue() and loan.status == 'borrowed' %}
+                                        <br>
+                                        <small class="text-danger">
+                                            Quá hạn {{ loan.get_days_overdue() }} ngày
+                                        </small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge 
+                                    {% if loan.status == 'borrowed' %}bg-primary
+                                    {% elif loan.status == 'returned' %}bg-success
+                                    {% elif loan.status == 'overdue' %}bg-warning
+                                    {% elif loan.status == 'pending' %}bg-info
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ loan.get_status_display() }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    {% if loan.status == 'pending' %}
+                                        <!-- Approve loan -->
+                                        <form method="POST" action="{{ url_for('admin.approve_loan', loan_id=loan.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Duyệt yêu cầu">
+                                                <i class="bi bi-check-circle"></i>
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Reject loan -->
+                                        <form method="POST" action="{{ url_for('admin.reject_loan', loan_id=loan.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Từ chối yêu cầu">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    {% if loan.status == 'borrowed' %}
+                                        <!-- Force return -->
+                                        <form method="POST" action="{{ url_for('loans.return_book', loan_id=loan.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-success btn-sm" title="Bắt buộc trả sách">
+                                                <i class="bi bi-arrow-return-left"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    <!-- View details -->
+                                    <a href="#" class="btn btn-outline-info btn-sm" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if loans.pages > 1 %}
+            <nav aria-label="Phân trang mượn trả" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if loans.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.manage_loans', page=loans.prev_num, status=status_filter) }}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in loans.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == loans.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.manage_loans', page=page_num, status=status_filter) }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if loans.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.manage_loans', page=loans.next_num, status=status_filter) }}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Loan statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <i class="bi bi-journal-text" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ loans.total }}</h4>
+                    <p class="card-text mb-0">Tổng số giao dịch</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ loans.items|selectattr('status', 'equalto', 'returned')|list|length }}</h4>
+                    <p class="card-text mb-0">Đã trả</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-dark">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ loans.items|selectattr('status', 'equalto', 'borrowed')|selectattr('due_date', 'lt', moment().date())|list|length }}</h4>
+                    <p class="card-text mb-0">Quá hạn</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <i class="bi bi-clock" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ loans.items|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                    <p class="card-text mb-0">Chờ duyệt</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status distribution -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Phân bố theo trạng thái
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Đang mượn ({{ loans.items|selectattr('status', 'equalto', 'borrowed')|list|length }})</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                {% set borrowed_count = loans.items|selectattr('status', 'equalto', 'borrowed')|list|length %}
+                                {% set borrowed_percentage = (borrowed_count / loans.total * 100)|round %}
+                                <div class="progress-bar bg-primary" style="width: {{ borrowed_percentage }}%">{{ borrowed_percentage }}%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Đã trả ({{ loans.items|selectattr('status', 'equalto', 'returned')|list|length }})</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                {% set returned_count = loans.items|selectattr('status', 'equalto', 'returned')|list|length %}
+                                {% set returned_percentage = (returned_count / loans.total * 100)|round %}
+                                <div class="progress-bar bg-success" style="width: {{ returned_percentage }}%">{{ returned_percentage }}%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Chờ duyệt ({{ loans.items|selectattr('status', 'equalto', 'pending')|list|length }})</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                {% set pending_count = loans.items|selectattr('status', 'equalto', 'pending')|list|length %}
+                                {% set pending_percentage = (pending_count / loans.total * 100)|round %}
+                                <div class="progress-bar bg-info" style="width: {{ pending_percentage }}%">{{ pending_percentage }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-lightbulb"></i> Hướng dẫn quản lý
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Duyệt yêu cầu:</strong> Chỉ áp dụng cho yêu cầu có trạng thái "Chờ duyệt"</li>
+                                <li><strong>Từ chối yêu cầu:</strong> Yêu cầu bị từ chối sẽ không thể mượn sách</li>
+                                <li><strong>Bắt buộc trả sách:</strong> Admin có thể bắt buộc user trả sách</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Lọc theo trạng thái:</strong> Sử dụng dropdown để lọc giao dịch</li>
+                                <li><strong>Lọc theo user:</strong> Tìm kiếm giao dịch của user cụ thể</li>
+                                <li><strong>Xem chi tiết:</strong> Click vào nút mắt để xem thông tin chi tiết</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Trang chủ - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Hero section -->
+        <div class="hero-section animate-fade-in">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="h3">Chào mừng đến với Thư viện số</h2>
+                    <p class="mb-0">Khám phá kho tàng kiến thức với hàng nghìn đầu sách chất lượng cao. Tìm kiếm, mượn và đọc sách trực tuyến một cách dễ dàng.</p>
+                </div>
+                <div class="col-md-4 text-center">
+                    <i class="bi bi-book" style="font-size: 4rem; opacity: 0.8;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search bar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="search-container animate-slide-up">
+            <form action="{{ url_for('books.search') }}" method="GET">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" name="q" placeholder="Tìm kiếm theo tên sách, tác giả, ISBN..." 
+                               value="{{ request.args.get('q', '') }}">
+                    </div>
+
+                    <div class="col-md-4">
+                        <select class="form-select" style="height: 62px;" name="category">
+                            <option value="">Tất cả danh mục</option>
+                            <option value="Văn học" {% if request.args.get('category') == 'Văn học' %}selected{% endif %}>Văn học</option>
+                            <option value="Khoa học" {% if request.args.get('category') == 'Khoa học' %}selected{% endif %}>Khoa học</option>
+                            <option value="Công nghệ" {% if request.args.get('category') == 'Công nghệ' %}selected{% endif %}>Công nghệ</option>
+                            <option value="Lịch sử" {% if request.args.get('category') == 'Lịch sử' %}selected{% endif %}>Lịch sử</option>
+                            <option value="Kinh tế" {% if request.args.get('category') == 'Kinh tế' %}selected{% endif %}>Kinh tế</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Tìm kiếm
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="d-flex justify-content-end align-items-center mb-4">
+        {% if current_user.is_authenticated and current_user.is_librarian() %}
+            <a href="{{ url_for('books.add_book') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm sách mới
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Books grid -->
+{% if books.items %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4">
+        {% for book in books.items %}
+        <div class="col animate-fade-in" style="animation-delay: {{ loop.index0 * 0.1 }}s;">
+            <div class="card h-100 book-card">
+                <div class="card-body">
+                    <h5 class="card-title text-truncate" title="{{ book.title }}">
+                        <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="text-decoration-none">
+                            {{ book.title }}
+                        </a>
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-secondary">{{ book.category or 'Chưa phân loại' }}</span>
+                        {% if book.publication_year %}
+                            <span class="badge bg-info">{{ book.publication_year }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="card-text small text-muted">
+                        {{ book.description[:100] + '...' if book.description and book.description|length > 100 else book.description or 'Chưa có mô tả' }}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-book"></i> {{ book.available_copies }}/{{ book.total_copies }}
+                        </small>
+                        <span class="badge {% if book.is_available() %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ book.get_availability_status() }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if books.pages > 1 %}
+    <nav aria-label="Phân trang" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if books.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('books.index', page=books.prev_num) }}">
+                        <i class="bi bi-chevron-left"></i> Trước
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in books.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                {% if page_num %}
+                    {% if page_num == books.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('books.index', page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if books.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('books.index', page=books.next_num) }}">
+                        Sau <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+{% else %}
+    <div class="text-center py-5 animate-fade-in">
+        <i class="bi bi-book" style="font-size: 4rem; color: var(--gray-300);"></i>
+        <h3 class="text-muted mt-3">Chưa có sách nào</h3>
+        <p class="text-muted">Hãy thêm sách mới vào thư viện để bắt đầu.</p>
+        {% if current_user.is_authenticated and current_user.is_librarian() %}
+            <a href="{{ url_for('books.add_book') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Thêm sách đầu tiên
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+
+<!-- Quick stats -->
+<div class="stats-grid">
+    <div class="stat-card animate-slide-up" style="animation-delay: 0.1s;">
+        <i class="bi bi-book text-gradient"></i>
+        <div class="stat-number">{{ books.total if books.total else 0 }}</div>
+        <div class="stat-label">Tổng số sách</div>
+    </div>
+    <div class="stat-card animate-slide-up" style="animation-delay: 0.2s;">
+        <i class="bi bi-people text-gradient"></i>
+        <div class="stat-number">Nhiều</div>
+        <div class="stat-label">Độc giả</div>
+    </div>
+    <div class="stat-card animate-slide-up" style="animation-delay: 0.3s;">
+        <i class="bi bi-collection text-gradient"></i>
+        <div class="stat-number">Đa dạng</div>
+        <div class="stat-label">Danh mục</div>
+    </div>
+    <div class="stat-card animate-slide-up" style="animation-delay: 0.4s;">
+        <i class="bi bi-clock text-gradient"></i>
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Truy cập</div>
+    </div>
+</div>
+{% endblock %} 

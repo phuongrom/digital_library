@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Sách - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">
+                <i class="bi bi-book"></i> Quản lý sách
+            </h1>
+        </div>
+    </div>
+
+    <!-- Books table -->
+    <div class="card shadow">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Danh sách sách
+                </h5>
+                <div>
+                    <a href="{{ url_for('books.add_book') }}" class="btn btn-success me-2">
+                        <i class="bi bi-plus-circle"></i> Thêm sách mới
+                    </a>
+                    <span class="badge bg-primary fs-6">{{ books.total }} sách</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Thông tin sách</th>
+                            <th>Danh mục</th>
+                            <th>Số lượng</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày thêm</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for book in books.items %}
+                        <tr>
+                            <td class="text-center fw-bold">{{ book.id }}</td>
+                            <td>
+                                <div class="book-info">
+                                    <strong class="d-block text-truncate" title="{{ book.title }}">{{ book.title }}</strong>
+                                    <small class="text-muted d-block">{{ book.author }}</small>
+                                    <small class="text-muted d-block">ISBN: {{ book.isbn }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                {% if book.category %}
+                                    <span class="badge bg-secondary">{{ book.category }}</span>
+                                {% else %}
+                                    <span class="text-muted">Chưa phân loại</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if book.available_copies > 0 %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                                    {{ book.available_copies }}/{{ book.total_copies }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if book.is_active %}bg-success{% else %}bg-danger{% endif %} fs-6">
+                                    {{ 'Hoạt động' if book.is_active else 'Không hoạt động' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <small class="text-muted">{{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <!-- Toggle status -->
+                                    <form method="POST" action="{{ url_for('admin.toggle_book_status', book_id=book.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm {% if book.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                                                title="{% if book.is_active %}Vô hiệu hóa{% else %}Kích hoạt{% endif %}">
+                                            <i class="bi {% if book.is_active %}bi-eye-slash{% else %}bi-eye{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Edit book -->
+                                    <a href="{{ url_for('admin.edit_book', book_id=book.id) }}" class="btn btn-outline-primary btn-sm" title="Chỉnh sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    
+                                    <!-- View book -->
+                                    <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="btn btn-outline-info btn-sm" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if books.pages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Phân trang sách">
+            <ul class="pagination justify-content-center mb-0">
+                {% if books.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.manage_books', page=books.prev_num) }}">
+                            <i class="bi bi-chevron-left"></i> Trước
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for page_num in books.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                    {% if page_num %}
+                        {% if page_num == books.page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.manage_books', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if books.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin.manage_books', page=books.next_num) }}">
+                            Sau <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Book statistics -->
+<div class="row mt-4 admin-stats">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <i class="bi bi-book" style="font-size: 2rem;"></i>
+                <h4 class="card-title mt-2">{{ books.total }}</h4>
+                <p class="card-text mb-0">Tổng số sách</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                <h4 class="card-title mt-2">{{ books.items|selectattr('is_active')|list|length }}</h4>
+                <p class="card-text mb-0">Sách hoạt động</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-warning text-dark">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                <h4 class="card-title mt-2">{{ books.items|selectattr('is_active', 'equalto', false)|list|length }}</h4>
+                <p class="card-text mb-0">Sách không hoạt động</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <i class="bi bi-collection" style="font-size: 2rem;"></i>
+                <h4 class="card-title mt-2">{{ books.items|map(attribute='category')|unique|list|length }}</h4>
+                <p class="card-text mb-0">Danh mục</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category distribution -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow category-distribution">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-pie-chart"></i> Phân bố theo danh mục
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% set categories = books.items|map(attribute='category')|unique|list %}
+                    {% for category in categories %}
+                        {% if category %}
+                            {% set category_books = books.items|selectattr('category', 'equalto', category)|list %}
+                            <div class="col-md-4 mb-3">
+                                <h6>{{ category }} ({{ category_books|length }})</h6>
+                                <div class="progress" style="height: 20px;">
+                                    {% set category_percentage = (category_books|length / books.total * 100)|round %}
+                                    <div class="progress-bar bg-secondary" style="width: {{ category_percentage }}%">{{ category_percentage }}%</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card quick-actions">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb"></i> Hướng dẫn quản lý
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>Vô hiệu hóa sách:</strong> Sách sẽ không hiển thị cho người dùng nhưng dữ liệu vẫn được giữ nguyên</li>
+                            <li><strong>Chỉnh sửa sách:</strong> Có thể thay đổi thông tin chi tiết của sách</li>
+                            <li><strong>Quản lý số lượng:</strong> Theo dõi và cập nhật số lượng sách có sẵn</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li><strong>Thêm sách mới:</strong> Sử dụng nút "Thêm sách mới" để tạo sách</li>
+                            <li><strong>Phân loại:</strong> Gán danh mục phù hợp cho từng sách</li>
+                            <li><strong>Kiểm tra trạng thái:</strong> Theo dõi sách hoạt động và không hoạt động</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

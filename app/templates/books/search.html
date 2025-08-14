@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Tìm kiếm sách - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="h2 mb-4">
+            <i class="bi bi-search"></i> Tìm kiếm sách
+        </h1>
+    </div>
+</div>
+
+<!-- Search form -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('books.search') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="q" class="form-label">Từ khóa tìm kiếm</label>
+                            <input type="text" class="form-control" id="q" name="q" 
+                                   value="{{ query }}" placeholder="Nhập tên sách, tác giả, ISBN...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="category" class="form-label">Danh mục</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Tất cả danh mục</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
+                                        {{ cat }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Tìm kiếm
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search results -->
+{% if query or category %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    {% if books.total > 0 %}
+                        Kết quả tìm kiếm: {{ books.total }} sách
+                    {% else %}
+                        Không tìm thấy kết quả
+                    {% endif %}
+                </h4>
+                
+                {% if books.total > 0 %}
+                    <small class="text-muted">
+                        Hiển thị {{ books.items|length }} / {{ books.total }} kết quả
+                    </small>
+                {% endif %}
+            </div>
+            
+            {% if query or category %}
+                <p class="text-muted mb-0">
+                    {% if query and category %}
+                        Tìm kiếm: "<strong>{{ query }}</strong>" trong danh mục "<strong>{{ category }}</strong>"
+                    {% elif query %}
+                        Tìm kiếm: "<strong>{{ query }}</strong>"
+                    {% elif category %}
+                        Danh mục: "<strong>{{ category }}</strong>"
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+<!-- Results grid -->
+{% if books.items %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 mb-4">
+        {% for book in books.items %}
+        <div class="col">
+            <div class="card h-100 book-card">
+                <div class="card-body">
+                    <h5 class="card-title text-truncate" title="{{ book.title }}">
+                        <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="text-decoration-none">
+                            {{ book.title }}
+                        </a>
+                    </h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ book.author }}</h6>
+                    
+                    <div class="mb-2">
+                        {% if book.category %}
+                            <span class="badge bg-secondary">{{ book.category }}</span>
+                        {% endif %}
+                        {% if book.publication_year %}
+                            <span class="badge bg-info">{{ book.publication_year }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="card-text small text-muted">
+                        {{ book.description[:100] + '...' if book.description and book.description|length > 100 else book.description or 'Chưa có mô tả' }}
+                    </p>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="bi bi-book"></i> {{ book.available_copies }}/{{ book.total_copies }}
+                        </small>
+                        <span class="badge {% if book.is_available() %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ book.get_availability_status() }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid">
+                        <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i> Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if books.pages > 1 %}
+    <nav aria-label="Phân trang kết quả tìm kiếm">
+        <ul class="pagination justify-content-center">
+            {% if books.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('books.search', q=query, category=category, page=books.prev_num) }}">
+                        <i class="bi bi-chevron-left"></i> Trước
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in books.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                {% if page_num %}
+                    {% if page_num == books.page %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('books.search', q=query, category=category, page=page_num) }}">{{ page_num }}</a>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if books.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('books.search', q=query, category=category, page=books.next_num) }}">
+                        Sau <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+    
+{% elif query or category %}
+    <!-- No results -->
+    <div class="text-center py-5">
+        <i class="bi bi-search" style="font-size: 4rem; color: #dee2e6;"></i>
+        <h3 class="text-muted mt-3">Không tìm thấy kết quả</h3>
+        <p class="text-muted">
+            {% if query and category %}
+                Không có sách nào phù hợp với từ khóa "{{ query }}" trong danh mục "{{ category }}"
+            {% elif query %}
+                Không có sách nào phù hợp với từ khóa "{{ query }}"
+            {% elif category %}
+                Không có sách nào trong danh mục "{{ category }}"
+            {% endif %}
+        </p>
+        
+        <div class="mt-4">
+            <h5>Gợi ý tìm kiếm:</h5>
+            <ul class="list-unstyled">
+                <li>• Kiểm tra chính tả của từ khóa</li>
+                <li>• Thử từ khóa ngắn hơn</li>
+                <li>• Thử từ khóa khác</li>
+                <li>• Bỏ bớt filter danh mục</li>
+            </ul>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{{ url_for('books.index') }}" class="btn btn-primary me-2">
+                <i class="bi bi-house"></i> Về trang chủ
+            </a>
+            <a href="{{ url_for('books.categories') }}" class="btn btn-outline-primary">
+                <i class="bi bi-collection"></i> Xem tất cả danh mục
+            </a>
+        </div>
+    </div>
+{% else %}
+    <!-- Initial state -->
+    <div class="text-center py-5">
+        <i class="bi bi-search" style="font-size: 4rem; color: #dee2e6;"></i>
+        <h3 class="text-muted mt-3">Bắt đầu tìm kiếm</h3>
+        <p class="text-muted">Nhập từ khóa hoặc chọn danh mục để tìm kiếm sách</p>
+        
+        <!-- Popular categories -->
+        <div class="mt-4">
+            <h5>Danh mục phổ biến:</h5>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                {% for cat in categories[:6] %}
+                    <a href="{{ url_for('books.search', category=cat) }}" class="btn btn-outline-secondary btn-sm">
+                        {{ cat }}
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Popular authors -->
+        <div class="mt-4">
+            <h5>Tác giả nổi tiếng:</h5>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a href="{{ url_for('books.search', q='J.K. Rowling') }}" class="btn btn-outline-info btn-sm">J.K. Rowling</a>
+                <a href="{{ url_for('books.search', q='Dale Carnegie') }}" class="btn btn-outline-info btn-sm">Dale Carnegie</a>
+                <a href="{{ url_for('books.search', q='Paulo Coelho') }}" class="btn btn-outline-info btn-sm">Paulo Coelho</a>
+                <a href="{{ url_for('books.search', q='Yuval Noah Harari') }}" class="btn btn-outline-info btn-sm">Yuval Noah Harari</a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Search tips -->
+{% if books.total > 0 %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb"></i> Mẹo tìm kiếm
+                </h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>Sử dụng từ khóa ngắn gọn để có nhiều kết quả hơn</li>
+                            <li>Tìm theo tên tác giả để xem tất cả sách của họ</li>
+                            <li>Kết hợp từ khóa với danh mục để lọc kết quả</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="mb-0">
+                            <li>Tìm theo ISBN để tìm chính xác một cuốn sách</li>
+                            <li>Sử dụng dấu ngoặc kép cho cụm từ chính xác</li>
+                            <li>Xem chi tiết sách để biết thêm thông tin</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

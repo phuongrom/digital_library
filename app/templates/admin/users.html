@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block title %}Quản lý Users - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h2 mb-4">
+                <i class="bi bi-people"></i> Quản lý người dùng
+            </h1>
+        </div>
+    </div>
+
+    <!-- Users table -->
+    <div class="card shadow">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-ul"></i> Danh sách người dùng
+                </h5>
+                <span class="badge bg-primary fs-6">{{ users.total }} users</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover admin-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Thông tin</th>
+                            <th>Vai trò</th>
+                            <th>Trạng thái</th>
+                            <th>Ngày tham gia</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users.items %}
+                        <tr>
+                            <td class="text-center fw-bold">{{ user.id }}</td>
+                            <td>
+                                <div class="user-info">
+                                    <strong class="d-block text-truncate" title="{{ user.full_name }}">{{ user.full_name }}</strong>
+                                    <small class="text-muted d-block">@{{ user.username }}</small>
+                                    <small class="text-muted d-block">{{ user.email }}</small>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge 
+                                    {% if user.role == 'admin' %}bg-danger
+                                    {% elif user.role == 'librarian' %}bg-warning
+                                    {% else %}bg-primary{% endif %}">
+                                    {{ user.role|title }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {% if user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ 'Hoạt động' if user.is_active else 'Vô hiệu hóa' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <small class="text-muted">{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}</small>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <!-- Toggle status -->
+                                    <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=user.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm {% if user.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}"
+                                                {% if user.id == current_user.id %}disabled{% endif %}
+                                                title="{% if user.is_active %}Vô hiệu hóa{% else %}Kích hoạt{% endif %}">
+                                            <i class="bi {% if user.is_active %}bi-person-x{% else %}bi-person-check{% endif %}"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Change role -->
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                                                data-bs-toggle="dropdown" aria-expanded="false"
+                                                {% if user.id == current_user.id %}disabled{% endif %}>
+                                            <i class="bi bi-gear"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><h6 class="dropdown-header">Thay đổi vai trò</h6></li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('admin.change_user_role', user_id=user.id) }}">
+                                                    <input type="hidden" name="role" value="user">
+                                                    <button type="submit" class="dropdown-item {% if user.role == 'user' %}active{% endif %}"
+                                                            {% if user.id == current_user.id %}disabled{% endif %}>
+                                                        <i class="bi bi-person"></i> User
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('admin.change_user_role', user_id=user.id) }}">
+                                                    <input type="hidden" name="role" value="librarian">
+                                                    <button type="submit" class="dropdown-item {% if user.role == 'librarian' %}active{% endif %}"
+                                                            {% if user.id == current_user.id %}disabled{% endif %}>
+                                                        <i class="bi bi-person-workspace"></i> Librarian
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('admin.change_user_role', user_id=user.id) }}">
+                                                    <input type="hidden" name="role" value="admin">
+                                                    <button type="submit" class="dropdown-item {% if user.role == 'admin' %}active{% endif %}"
+                                                            {% if user.id == current_user.id %}disabled{% endif %}>
+                                                        <i class="bi bi-shield"></i> Admin
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- View profile -->
+                                    <a href="#" class="btn btn-outline-info btn-sm" title="Xem profile">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if users.pages > 1 %}
+            <nav aria-label="Phân trang users" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if users.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.manage_users', page=users.prev_num) }}">
+                                <i class="bi bi-chevron-left"></i> Trước
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in users.iter_pages(left_edge=2, left_current=2, right_current=3, right_edge=2) %}
+                        {% if page_num %}
+                            {% if page_num == users.page %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% else %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.manage_users', page=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if users.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.manage_users', page=users.next_num) }}">
+                                Sau <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- User statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <i class="bi bi-people" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ users.total }}</h4>
+                    <p class="card-text mb-0">Tổng số users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <i class="bi bi-person-check" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ users.items|selectattr('is_active')|list|length }}</h4>
+                    <p class="card-text mb-0">Users hoạt động</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-dark">
+                <div class="card-body">
+                    <i class="bi bi-person-workspace" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ users.items|selectattr('role', 'equalto', 'librarian')|list|length }}</h4>
+                    <p class="card-text mb-0">Thủ thư</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-danger text-white">
+                <div class="card-body">
+                    <i class="bi bi-shield" style="font-size: 2rem;"></i>
+                    <h4 class="card-title mt-2">{{ users.items|selectattr('role', 'equalto', 'admin')|list|length }}</h4>
+                    <p class="card-text mb-0">Admin</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role distribution chart -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Phân bố vai trò
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>User ({{ users.items|selectattr('role', 'equalto', 'user')|list|length }})</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                {% set user_count = users.items|selectattr('role', 'equalto', 'user')|list|length %}
+                                {% set user_percentage = (user_count / users.total * 100)|round %}
+                                <div class="progress-bar bg-primary" style="width: {{ user_percentage }}%">{{ user_percentage }}%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Librarian ({{ users.items|selectattr('role', 'equalto', 'librarian')|list|length }})</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                {% set librarian_count = users.items|selectattr('role', 'equalto', 'librarian')|list|length %}
+                                {% set librarian_percentage = (librarian_count / users.total * 100)|round %}
+                                <div class="progress-bar bg-warning" style="width: {{ librarian_percentage }}%">{{ librarian_percentage }}%</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Admin ({{ users.items|selectattr('role', 'equalto', 'admin')|list|length }})</h6>
+                            <div class="progress mb-3" style="height: 20px;">
+                                {% set admin_count = users.items|selectattr('role', 'equalto', 'admin')|list|length %}
+                                {% set admin_percentage = (admin_count / users.total * 100)|round %}
+                                <div class="progress-bar bg-danger" style="width: {{ admin_percentage }}%">{{ admin_percentage }}%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-lightbulb"></i> Hướng dẫn quản lý
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Vô hiệu hóa user:</strong> User sẽ không thể đăng nhập nhưng dữ liệu vẫn được giữ nguyên</li>
+                                <li><strong>Thay đổi vai trò:</strong> Có thể thay đổi quyền của user (không thể thay đổi quyền của chính mình)</li>
+                                <li><strong>User hoạt động:</strong> Có thể đăng nhập và sử dụng hệ thống bình thường</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="mb-0">
+                                <li><strong>Admin:</strong> Có toàn quyền quản trị hệ thống</li>
+                                <li><strong>Librarian:</strong> Có thể quản lý sách và mượn trả</li>
+                                <li><strong>User:</strong> Chỉ có thể mượn trả sách</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

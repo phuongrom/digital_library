@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa sách - Admin{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('books.index') }}">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('admin.manage_books') }}">Quản lý sách</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Chỉnh sửa sách</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> Chỉnh sửa sách: {{ book.title }}
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="isbn" class="form-label">
+                                <i class="bi bi-upc"></i> ISBN <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="isbn" name="isbn" 
+                                   value="{{ book.isbn }}" required pattern="[0-9-]{10,13}" maxlength="13">
+                            <div class="form-text">ISBN phải có 10-13 ký tự, chỉ chứa số và dấu gạch ngang</div>
+                            <div class="invalid-feedback">
+                                Vui lòng nhập ISBN hợp lệ
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">
+                                <i class="bi bi-book"></i> Tên sách <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   value="{{ book.title }}" required maxlength="200">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập tên sách
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="author" class="form-label">
+                                <i class="bi bi-person"></i> Tác giả <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="author" name="author" 
+                                   value="{{ book.author }}" required maxlength="100">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập tên tác giả
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="publisher" class="form-label">
+                                <i class="bi bi-building"></i> Nhà xuất bản
+                            </label>
+                            <input type="text" class="form-control" id="publisher" name="publisher" 
+                                   value="{{ book.publisher or '' }}" maxlength="100">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="publication_year" class="form-label">
+                                <i class="bi bi-calendar"></i> Năm xuất bản
+                            </label>
+                            <input type="number" class="form-control" id="publication_year" name="publication_year" 
+                                   value="{{ book.publication_year or '' }}" min="1800" max="2024">
+                            <div class="form-text">Năm xuất bản từ 1800 đến 2024</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">
+                                <i class="bi bi-collection"></i> Danh mục
+                            </label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Chọn danh mục</option>
+                                <option value="Văn học" {% if book.category == 'Văn học' %}selected{% endif %}>Văn học</option>
+                                <option value="Khoa học" {% if book.category == 'Khoa học' %}selected{% endif %}>Khoa học</option>
+                                <option value="Công nghệ" {% if book.category == 'Công nghệ' %}selected{% endif %}>Công nghệ</option>
+                                <option value="Lịch sử" {% if book.category == 'Lịch sử' %}selected{% endif %}>Lịch sử</option>
+                                <option value="Kinh tế" {% if book.category == 'Kinh tế' %}selected{% endif %}>Kinh tế</option>
+                                <option value="Triết học" {% if book.category == 'Triết học' %}selected{% endif %}>Triết học</option>
+                                <option value="Tâm lý học" {% if book.category == 'Tâm lý học' %}selected{% endif %}>Tâm lý học</option>
+                                <option value="Y học" {% if book.category == 'Y học' %}selected{% endif %}>Y học</option>
+                                <option value="Nghệ thuật" {% if book.category == 'Nghệ thuật' %}selected{% endif %}>Nghệ thuật</option>
+                                <option value="Thể thao" {% if book.category == 'Thể thao' %}selected{% endif %}>Thể thao</option>
+                                <option value="Du lịch" {% if book.category == 'Du lịch' %}selected{% endif %}>Du lịch</option>
+                                <option value="Nấu ăn" {% if book.category == 'Nấu ăn' %}selected{% endif %}>Nấu ăn</option>
+                                <option value="Tự lực" {% if book.category == 'Tự lực' %}selected{% endif %}>Tự lực</option>
+                                <option value="Khác" {% if book.category == 'Khác' %}selected{% endif %}>Khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="total_copies" class="form-label">
+                                <i class="bi bi-stack"></i> Tổng số lượng <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="total_copies" name="total_copies" 
+                                   value="{{ book.total_copies }}" required min="1" max="100">
+                            <div class="form-text">Số lượng sách từ 1 đến 100</div>
+                            <div class="invalid-feedback">
+                                Vui lòng nhập số lượng hợp lệ
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Vị trí trong thư viện
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   value="{{ book.location or '' }}" maxlength="50" placeholder="Ví dụ: Kệ A1, Tầng 2">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="bi bi-text-paragraph"></i> Mô tả
+                        </label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4" maxlength="1000" 
+                                  placeholder="Nhập mô tả ngắn gọn về nội dung sách (tối đa 1000 ký tự)">{{ book.description or '' }}</textarea>
+                        <div class="form-text">
+                            <span id="char-count">{{ (book.description or '')|length }}</span>/1000 ký tự
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="bi bi-check-circle"></i> Cập nhật sách
+                        </button>
+                        <a href="{{ url_for('admin.manage_books') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy bỏ
+                        </a>
+                        <a href="{{ url_for('books.book_detail', book_id=book.id) }}" class="btn btn-outline-info btn-lg">
+                            <i class="bi bi-eye"></i> Xem chi tiết
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Book information -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Thông tin hiện tại
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>ID:</strong> {{ book.id }}</p>
+                        <p><strong>Ngày thêm:</strong> {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}</p>
+                        <p><strong>Cập nhật lần cuối:</strong> {{ book.updated_at.strftime('%d/%m/%Y') if book.updated_at else 'N/A' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Trạng thái:</strong> 
+                            <span class="badge {% if book.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ 'Hoạt động' if book.is_active else 'Không hoạt động' }}
+                            </span>
+                        </p>
+                        <p><strong>Số lượng có sẵn:</strong> {{ book.available_copies }}/{{ book.total_copies }}</p>
+                        <p><strong>Lượt mượn:</strong> {{ book.loans|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Character counter for description
+document.getElementById('description').addEventListener('input', function() {
+    const maxLength = 1000;
+    const currentLength = this.value.length;
+    const charCount = document.getElementById('char-count');
+    
+    charCount.textContent = currentLength;
+    
+    if (currentLength > maxLength * 0.9) {
+        charCount.className = 'text-warning';
+    } else {
+        charCount.className = '';
+    }
+    
+    if (currentLength > maxLength) {
+        charCount.className = 'text-danger';
+    }
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    this.classList.add('was-validated');
+});
+
+// Auto-format ISBN
+document.getElementById('isbn').addEventListener('input', function() {
+    let value = this.value.replace(/[^0-9-]/g, '');
+    
+    // Auto-add hyphens for common ISBN formats
+    if (value.length >= 3 && !value.includes('-')) {
+        if (value.length === 10) {
+            value = value.replace(/(\d{1})(\d{4})(\d{4})(\d{1})/, '$1-$2-$3-$4');
+        } else if (value.length === 13) {
+            value = value.replace(/(\d{3})(\d{1})(\d{4})(\d{4})(\d{1})/, '$1-$2-$3-$4-$5');
+        }
+    }
+    
+    this.value = value;
+});
+
+// Confirm before leaving with unsaved changes
+window.addEventListener('beforeunload', function(e) {
+    const form = document.querySelector('form');
+    if (form && form.classList.contains('was-validated')) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+{% endblock %} 

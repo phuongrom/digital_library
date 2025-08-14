@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Thêm sách mới - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('books.index') }}">Trang chủ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Thêm sách mới</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Thêm sách mới vào thư viện
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" class="needs-validation" novalidate>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="isbn" class="form-label">
+                                <i class="bi bi-upc"></i> ISBN <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="isbn" name="isbn" 
+                                   required pattern="[0-9-]{10,13}" maxlength="13"
+                                   placeholder="978-0-7475-3269-9">
+                            <div class="form-text">ISBN phải có 10-13 ký tự, chỉ chứa số và dấu gạch ngang</div>
+                            <div class="invalid-feedback">
+                                Vui lòng nhập ISBN hợp lệ
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="title" class="form-label">
+                                <i class="bi bi-book"></i> Tên sách <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   required maxlength="200" placeholder="Nhập tên sách">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập tên sách
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="author" class="form-label">
+                                <i class="bi bi-person"></i> Tác giả <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="author" name="author" 
+                                   required maxlength="100" placeholder="Nhập tên tác giả">
+                            <div class="invalid-feedback">
+                                Vui lòng nhập tên tác giả
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="publisher" class="form-label">
+                                <i class="bi bi-building"></i> Nhà xuất bản
+                            </label>
+                            <input type="text" class="form-control" id="publisher" name="publisher" 
+                                   maxlength="100" placeholder="Nhập tên nhà xuất bản">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="publication_year" class="form-label">
+                                <i class="bi bi-calendar"></i> Năm xuất bản
+                            </label>
+                            <input type="number" class="form-control" id="publication_year" name="publication_year" 
+                                   min="1800" max="2024" placeholder="2024">
+                            <div class="form-text">Năm xuất bản từ 1800 đến 2024</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="category" class="form-label">
+                                <i class="bi bi-collection"></i> Danh mục
+                            </label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Chọn danh mục</option>
+                                <option value="Văn học">Văn học</option>
+                                <option value="Khoa học">Khoa học</option>
+                                <option value="Công nghệ">Công nghệ</option>
+                                <option value="Lịch sử">Lịch sử</option>
+                                <option value="Kinh tế">Kinh tế</option>
+                                <option value="Triết học">Triết học</option>
+                                <option value="Tâm lý học">Tâm lý học</option>
+                                <option value="Y học">Y học</option>
+                                <option value="Nghệ thuật">Nghệ thuật</option>
+                                <option value="Thể thao">Thể thao</option>
+                                <option value="Du lịch">Du lịch</option>
+                                <option value="Nấu ăn">Nấu ăn</option>
+                                <option value="Tự lực">Tự lực</option>
+                                <option value="Khác">Khác</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="total_copies" class="form-label">
+                                <i class="bi bi-stack"></i> Số lượng <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="total_copies" name="total_copies" 
+                                   required min="1" max="100" value="1" placeholder="1">
+                            <div class="form-text">Số lượng sách từ 1 đến 100</div>
+                            <div class="invalid-feedback">
+                                Vui lòng nhập số lượng hợp lệ
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">
+                                <i class="bi bi-geo-alt"></i> Vị trí trong thư viện
+                            </label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   maxlength="50" placeholder="Ví dụ: Kệ A1, Tầng 2">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">
+                            <i class="bi bi-text-paragraph"></i> Mô tả
+                        </label>
+                        <textarea class="form-control" id="description" name="description" 
+                                  rows="4" maxlength="1000" 
+                                  placeholder="Nhập mô tả ngắn gọn về nội dung sách (tối đa 1000 ký tự)"></textarea>
+                        <div class="form-text">
+                            <span id="char-count">0</span>/1000 ký tự
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-plus-circle"></i> Thêm sách
+                        </button>
+                        <a href="{{ url_for('books.index') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-x-circle"></i> Hủy bỏ
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Help information -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-question-circle"></i> Hướng dẫn thêm sách
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Thông tin bắt buộc:</h6>
+                        <ul class="small">
+                            <li><strong>ISBN:</strong> Mã số chuẩn quốc tế của sách</li>
+                            <li><strong>Tên sách:</strong> Tên đầy đủ của cuốn sách</li>
+                            <li><strong>Tác giả:</strong> Người viết hoặc biên soạn</li>
+                            <li><strong>Số lượng:</strong> Số bản sách có trong thư viện</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Thông tin bổ sung:</h6>
+                        <ul class="small">
+                            <li><strong>Nhà xuất bản:</strong> Đơn vị phát hành sách</li>
+                            <li><strong>Năm xuất bản:</strong> Năm phát hành bản in</li>
+                            <li><strong>Danh mục:</strong> Phân loại nội dung sách</li>
+                            <li><strong>Vị trí:</strong> Nơi đặt sách trong thư viện</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Lưu ý:</strong> Sau khi thêm sách, bạn có thể chỉnh sửa thông tin bất cứ lúc nào thông qua trang quản trị.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Character counter for description
+document.getElementById('description').addEventListener('input', function() {
+    const maxLength = 1000;
+    const currentLength = this.value.length;
+    const charCount = document.getElementById('char-count');
+    
+    charCount.textContent = currentLength;
+    
+    if (currentLength > maxLength * 0.9) {
+        charCount.className = 'text-warning';
+    } else {
+        charCount.className = '';
+    }
+    
+    if (currentLength > maxLength) {
+        charCount.className = 'text-danger';
+    }
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    this.classList.add('was-validated');
+});
+
+// Auto-format ISBN
+document.getElementById('isbn').addEventListener('input', function() {
+    let value = this.value.replace(/[^0-9-]/g, '');
+    
+    // Auto-add hyphens for common ISBN formats
+    if (value.length >= 3 && !value.includes('-')) {
+        if (value.length === 10) {
+            value = value.replace(/(\d{1})(\d{4})(\d{4})(\d{1})/, '$1-$2-$3-$4');
+        } else if (value.length === 13) {
+            value = value.replace(/(\d{3})(\d{1})(\d{4})(\d{4})(\d{1})/, '$1-$2-$3-$4-$5');
+        }
+    }
+    
+    this.value = value;
+});
+</script>
+{% endblock %} 

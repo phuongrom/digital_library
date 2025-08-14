@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng ký - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h4 class="mb-0">
+                    <i class="bi bi-person-plus"></i> Đăng ký tài khoản mới
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="registerForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-person"></i> Tên đăng nhập <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   required placeholder="Tên đăng nhập (3-20 ký tự)">
+                            <div class="form-text">Tên đăng nhập phải từ 3-20 ký tự, chỉ chứa chữ cái, số và dấu gạch dưới</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i> Email <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   required placeholder="example@email.com">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="full_name" class="form-label">
+                            <i class="bi bi-person-badge"></i> Họ và tên <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" 
+                               required placeholder="Họ và tên đầy đủ">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Mật khẩu <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password" 
+                                   required placeholder="Mật khẩu (tối thiểu 6 ký tự)">
+                            <div class="form-text">Mật khẩu phải có ít nhất 6 ký tự</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">
+                                <i class="bi bi-lock-fill"></i> Xác nhận mật khẩu <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                   required placeholder="Nhập lại mật khẩu">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="agree_terms" required>
+                        <label class="form-check-label" for="agree_terms">
+                            Tôi đồng ý với <a href="#" class="text-decoration-none">điều khoản sử dụng</a> và 
+                            <a href="#" class="text-decoration-none">chính sách bảo mật</a> của thư viện
+                        </label>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-person-plus"></i> Đăng ký tài khoản
+                        </button>
+                    </div>
+                </form>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <p class="mb-0">Đã có tài khoản?</p>
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Benefits -->
+        <div class="row mt-4">
+            <div class="col-md-4 text-center">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <i class="bi bi-book text-primary" style="font-size: 2rem;"></i>
+                        <h6 class="mt-2">Mượn sách miễn phí</h6>
+                        <small class="text-muted">Truy cập kho tàng kiến thức khổng lồ</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <i class="bi bi-clock text-success" style="font-size: 2rem;"></i>
+                        <h6 class="mt-2">Truy cập 24/7</h6>
+                        <small class="text-muted">Mượn trả sách mọi lúc, mọi nơi</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <i class="bi bi-shield-check text-info" style="font-size: 2rem;"></i>
+                        <h6 class="mt-2">Bảo mật thông tin</h6>
+                        <small class="text-muted">Thông tin cá nhân được bảo vệ an toàn</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Mật khẩu xác nhận không khớp!');
+        return false;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('Mật khẩu phải có ít nhất 6 ký tự!');
+        return false;
+    }
+    
+    const username = document.getElementById('username').value;
+    if (username.length < 3 || username.length > 20) {
+        e.preventDefault();
+        alert('Tên đăng nhập phải từ 3-20 ký tự!');
+        return false;
+    }
+});
+</script>
+{% endblock %} 

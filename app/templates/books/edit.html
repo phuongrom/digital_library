@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Thêm sách mới - Thư viện số{% endblock %}
+{% block title %}Chỉnh sửa sách - Thư viện số{% endblock %}
 
 {% block content %}
-<div class="add-book-container">
-    <div class="add-book-card">
-        <div class="add-book-header">
-            <div class="add-book-icon">
-                <i class="bi bi-book-plus"></i>
+<div class="edit-book-container">
+    <div class="edit-book-card">
+        <div class="edit-book-header">
+            <div class="edit-book-icon">
+                <i class="bi bi-pencil-square"></i>
             </div>
-            <h2>Thêm sách mới</h2>
-            <p>Điền thông tin sách để thêm vào thư viện</p>
+            <h2>Chỉnh sửa sách</h2>
+            <p>Cập nhật thông tin sách "{{ book.title }}"</p>
         </div>
         
-        <form method="POST" class="add-book-form">
+        <form method="POST" class="edit-book-form">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -21,7 +21,7 @@
                             <i class="bi bi-upc-scan"></i> ISBN *
                         </label>
                         <input type="text" class="form-input" id="isbn" name="isbn" 
-                               required placeholder="Nhập ISBN">
+                               value="{{ book.isbn }}" required placeholder="Nhập ISBN">
                     </div>
                     
                     <div class="form-group">
@@ -29,7 +29,7 @@
                             <i class="bi bi-book"></i> Tên sách *
                         </label>
                         <input type="text" class="form-input" id="title" name="title" 
-                               required placeholder="Nhập tên sách">
+                               value="{{ book.title }}" required placeholder="Nhập tên sách">
                     </div>
                     
                     <div class="form-group">
@@ -37,7 +37,7 @@
                             <i class="bi bi-person"></i> Tác giả *
                         </label>
                         <input type="text" class="form-input" id="author" name="author" 
-                               required placeholder="Nhập tên tác giả">
+                               value="{{ book.author }}" required placeholder="Nhập tên tác giả">
                     </div>
                 </div>
                 
@@ -48,12 +48,12 @@
                         </label>
                         <select class="form-select" id="category" name="category" required>
                             <option value="">Chọn thể loại</option>
-                            <option value="Văn học">Văn học</option>
-                            <option value="Kinh tế">Kinh tế</option>
-                            <option value="Khoa học">Khoa học</option>
-                            <option value="Lịch sử">Lịch sử</option>
-                            <option value="Công nghệ">Công nghệ</option>
-                            <option value="Khác">Khác</option>
+                            <option value="Văn học" {% if book.category == 'Văn học' %}selected{% endif %}>Văn học</option>
+                            <option value="Kinh tế" {% if book.category == 'Kinh tế' %}selected{% endif %}>Kinh tế</option>
+                            <option value="Khoa học" {% if book.category == 'Khoa học' %}selected{% endif %}>Khoa học</option>
+                            <option value="Lịch sử" {% if book.category == 'Lịch sử' %}selected{% endif %}>Lịch sử</option>
+                            <option value="Công nghệ" {% if book.category == 'Công nghệ' %}selected{% endif %}>Công nghệ</option>
+                            <option value="Khác" {% if book.category == 'Khác' %}selected{% endif %}>Khác</option>
                         </select>
                     </div>
                     
@@ -62,7 +62,7 @@
                             <i class="bi bi-stack"></i> Số lượng cuốn *
                         </label>
                         <input type="number" class="form-input" id="total_copies" name="total_copies" 
-                               required placeholder="Nhập số lượng" min="1" value="1">
+                               value="{{ book.total_copies }}" required placeholder="Nhập số lượng" min="1">
                     </div>
                     
                     <div class="form-group">
@@ -70,7 +70,7 @@
                             <i class="bi bi-geo-alt"></i> Vị trí
                         </label>
                         <input type="text" class="form-input" id="location" name="location" 
-                               placeholder="Ví dụ: Kệ A1">
+                               value="{{ book.location or '' }}" placeholder="Ví dụ: Kệ A1">
                     </div>
                 </div>
             </div>
@@ -82,7 +82,7 @@
                             <i class="bi bi-building"></i> Nhà xuất bản
                         </label>
                         <input type="text" class="form-input" id="publisher" name="publisher" 
-                               placeholder="Nhập nhà xuất bản">
+                               value="{{ book.publisher or '' }}" placeholder="Nhập nhà xuất bản">
                     </div>
                 </div>
                 
@@ -92,7 +92,7 @@
                             <i class="bi bi-calendar"></i> Năm xuất bản
                         </label>
                         <input type="number" class="form-input" id="publication_year" name="publication_year" 
-                               placeholder="Nhập năm xuất bản" min="1900" max="2030">
+                               value="{{ book.publication_year or '' }}" placeholder="Nhập năm xuất bản" min="1900" max="2030">
                     </div>
                 </div>
             </div>
@@ -102,7 +102,7 @@
                     <i class="bi bi-text-paragraph"></i> Mô tả
                 </label>
                 <textarea class="form-input" id="description" name="description" rows="3" 
-                          placeholder="Mô tả ngắn gọn về nội dung sách..."></textarea>
+                          placeholder="Mô tả ngắn gọn về nội dung sách...">{{ book.description or '' }}</textarea>
             </div>
             
             <div class="form-actions">
@@ -110,59 +110,10 @@
                     <i class="bi bi-x-circle"></i> Hủy
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> Thêm sách
+                    <i class="bi bi-check-circle"></i> Cập nhật sách
                 </button>
             </div>
         </form>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Character counter for description
-document.getElementById('description').addEventListener('input', function() {
-    const maxLength = 1000;
-    const currentLength = this.value.length;
-    const charCount = document.getElementById('char-count');
-    
-    charCount.textContent = currentLength;
-    
-    if (currentLength > maxLength * 0.9) {
-        charCount.className = 'text-warning';
-    } else {
-        charCount.className = '';
-    }
-    
-    if (currentLength > maxLength) {
-        charCount.className = 'text-danger';
-    }
-});
-
-// Form validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    if (!this.checkValidity()) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    
-    this.classList.add('was-validated');
-});
-
-// Auto-format ISBN
-document.getElementById('isbn').addEventListener('input', function() {
-    let value = this.value.replace(/[^0-9-]/g, '');
-    
-    // Auto-add hyphens for common ISBN formats
-    if (value.length >= 3 && !value.includes('-')) {
-        if (value.length === 10) {
-            value = value.replace(/(\d{1})(\d{4})(\d{4})(\d{1})/, '$1-$2-$3-$4');
-        } else if (value.length === 13) {
-            value = value.replace(/(\d{3})(\d{1})(\d{4})(\d{4})(\d{1})/, '$1-$2-$3-$4-$5');
-        }
-    }
-    
-    this.value = value;
-});
-</script>
 {% endblock %} 

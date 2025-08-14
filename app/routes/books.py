@@ -116,7 +116,7 @@ def borrow_book(book_id):
     
     return redirect(url_for('books.book_detail', book_id=book_id))
 
-@books_bp.route('/add', methods=['GET', 'POST'])
+@books_bp.route('/admin/books/add', methods=['GET', 'POST'])
 @login_required
 def add_book():
     if not current_user.is_librarian():
@@ -155,14 +155,14 @@ def add_book():
             db.session.add(new_book)
             db.session.commit()
             flash('Thêm sách thành công!', 'success')
-            return redirect(url_for('books.index'))
+            return redirect(url_for('books.admin_manage_books'))
         except Exception as e:
             db.session.rollback()
             flash('Có lỗi xảy ra khi thêm sách!', 'danger')
     
     return render_template('books/add.html')
 
-@books_bp.route('/edit/<int:book_id>', methods=['GET', 'POST'])
+@books_bp.route('/admin/books/edit/<int:book_id>', methods=['GET', 'POST'])
 @login_required
 def edit_book(book_id):
     if not current_user.is_librarian():
@@ -185,7 +185,7 @@ def edit_book(book_id):
         try:
             db.session.commit()
             flash('Cập nhật sách thành công!', 'success')
-            return redirect(url_for('books.book_detail', book_id=book_id))
+            return redirect(url_for('books.admin_manage_books'))
         except Exception as e:
             db.session.rollback()
             flash('Có lỗi xảy ra khi cập nhật sách!', 'danger')
@@ -202,12 +202,39 @@ def delete_book(book_id):
     book = Book.query.get_or_404(book_id)
     
     try:
-        book.is_active = False
+        # Check if book has active loans
+        active_loans = Loan.query.filter_by(book_id=book.id, status='borrowed').count()
+        if active_loans > 0:
+            flash(f'Không thể xóa sách "{book.title}" vì đang có {active_loans} lượt mượn!', 'warning')
+            return redirect(url_for('books.admin_manage_books'))
+        
+        db.session.delete(book)
         db.session.commit()
-        flash('Xóa sách thành công!', 'success')
+        flash(f'Đã xóa sách "{book.title}"!', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('Có lỗi xảy ra khi xóa sách!', 'danger')
+        flash('Có lỗi xảy ra!', 'danger')
+    
+    return redirect(url_for('books.admin_manage_books'))
+
+@books_bp.route('/toggle-status/<int:book_id>', methods=['POST'])
+@login_required
+def toggle_book_status(book_id):
+    if not current_user.is_librarian():
+        flash('Bạn không có quyền thay đổi trạng thái sách!', 'danger')
+        return redirect(url_for('books.index'))
+    
+    book = Book.query.get_or_404(book_id)
+    
+    try:
+        book.is_active = not book.is_active
+        db.session.commit()
+        
+        status = "kích hoạt" if book.is_active else "vô hiệu hóa"
+        flash(f'Đã {status} sách "{book.title}"!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra!', 'danger')
     
     return redirect(url_for('books.index'))
 
@@ -219,3 +246,20 @@ def categories():
     categories = [cat[0] for cat in categories]
     
     return render_template('books/categories.html', categories=categories) 
+
+# Admin book management routes
+@books_bp.route('/admin/books')
+@login_required
+def admin_manage_books():
+    if not current_user.is_admin():
+        flash('Bạn cần quyền admin để truy cập trang này!', 'danger')
+        return redirect(url_for('books.index'))
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    books = Book.query.order_by(Book.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('admin/books.html', books=books) 

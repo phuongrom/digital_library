@@ -204,12 +204,47 @@ function initFormValidation() {
     });
 }
 
+function showFieldError(field, message) {
+    removeFieldError(field);
+
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'invalid-feedback';
+    errorDiv.textContent = message;
+    errorDiv.style.cssText = `
+        display: block;
+        color: #dc2626;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        padding-left: 3rem;
+        position: relative;
+        z-index: 1;
+    `;
+
+    // Tìm parent container để thêm error message
+    const fieldContainer = field.closest('.form-group') || field.parentNode;
+    fieldContainer.appendChild(errorDiv);
+    
+    // Thêm class error cho input
+    field.classList.add('error');
+}
+
+function removeFieldError(field) {
+    const fieldContainer = field.closest('.form-group') || field.parentNode;
+    const existingError = fieldContainer.querySelector('.invalid-feedback');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Bỏ class error
+    field.classList.remove('error');
+}
+
 function validateField(field) {
     const value = field.value.trim();
     let isValid = true;
     let errorMessage = '';
 
-    field.classList.remove('is-valid', 'is-invalid');
+    field.classList.remove('is-valid', 'is-invalid', 'error');
     
     if (field.hasAttribute('required') && !value) {
         isValid = false;
@@ -253,29 +288,6 @@ function validateForm(form) {
     });
 
     return isValid;
-}
-
-function showFieldError(field, message) {
-    removeFieldError(field);
-
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'invalid-feedback';
-    errorDiv.textContent = message;
-    errorDiv.style.cssText = `
-        display: block;
-        color: var(--danger-color);
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-    `;
-
-    field.parentNode.appendChild(errorDiv);
-}
-
-function removeFieldError(field) {
-    const existingError = field.parentNode.querySelector('.invalid-feedback');
-    if (existingError) {
-        existingError.remove();
-    }
 }
 
 function showFormError(message) {

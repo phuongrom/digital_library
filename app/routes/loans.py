@@ -210,3 +210,88 @@ def statistics():
                          overdue_loans=overdue_loans,
                          monthly_stats=monthly_stats,
                          popular_books=popular_books) 
+
+# Admin loan management routes
+@loans_bp.route('/admin/loans')
+@login_required
+def admin_manage_loans():
+    if not current_user.is_admin():
+        flash('Bạn cần quyền admin để truy cập trang này!', 'danger')
+        return redirect(url_for('loans.my_loans'))
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    status_filter = request.args.get('status', '')
+    
+    query = Loan.query
+    if status_filter:
+        query = query.filter(Loan.status == status_filter)
+    
+    # Sử dụng loan_date thay vì created_at
+    loans = query.order_by(Loan.loan_date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return render_template('admin/loans.html', loans=loans, status_filter=status_filter)
+
+@loans_bp.route('/admin/loan/<int:loan_id>/approve', methods=['POST'])
+@login_required
+def admin_approve_loan(loan_id):
+    if not current_user.is_admin():
+        flash('Bạn cần quyền admin để phê duyệt mượn sách!', 'danger')
+        return redirect(url_for('loans.my_loans'))
+    
+    loan = Loan.query.get_or_404(loan_id)
+    
+    try:
+        loan.status = 'approved'
+        db.session.commit()
+        flash(f'Đã phê duyệt mượn sách "{loan.book.title}" cho {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra!', 'danger')
+    
+    return redirect(url_for('loans.admin_manage_loans'))
+
+@loans_bp.route('/admin/loan/<int:loan_id>/reject', methods=['POST'])
+@login_required
+def admin_reject_loan(loan_id):
+    if not current_user.is_admin():
+        flash('Bạn cần quyền admin để từ chối mượn sách!', 'danger')
+        return redirect(url_for('loans.my_loans'))
+    
+    loan = Loan.query.get_or_404(loan_id)
+    
+    try:
+        loan.status = 'rejected'
+        db.session.commit()
+        flash(f'Đã từ chối mượn sách "{loan.book.title}" cho {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra!', 'danger')
+    
+    return redirect(url_for('loans.admin_manage_loans'))
+
+@loans_bp.route('/admin/loan/<int:loan_id>/force-return', methods=['POST'])
+@login_required
+def admin_force_return(loan_id):
+    if not current_user.is_admin():
+        flash('Bạn cần quyền admin để bắt buộc trả sách!', 'danger')
+        return redirect(url_for('loans.my_loans'))
+    
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'borrowed':
+        flash('Chỉ có thể bắt buộc trả sách đang được mượn!', 'warning')
+        return redirect(url_for('loans.admin_manage_loans'))
+    
+    try:
+        loan.status = 'returned'
+        loan.return_date = datetime.now()
+        db.session.commit()
+        flash(f'Đã bắt buộc trả sách "{loan.book.title}" từ {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra!', 'danger')
+    
+    return redirect(url_for('loans.admin_manage_loans')) 

@@ -3,269 +3,174 @@
 {% block title %}{{ book.title }} - Thư viện số{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ url_for('books.index') }}">Trang chủ</a></li>
-                <li class="breadcrumb-item"><a href="{{ url_for('books.categories') }}">Danh mục</a></li>
-                {% if book.category %}
-                    <li class="breadcrumb-item"><a href="{{ url_for('books.categories', category=book.category) }}">{{ book.category }}</a></li>
-                {% endif %}
-                <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Thông tin sách</h5>
-            </div>
-            <div class="card-body">
-                <p><strong>Tên sách:</strong> {{ book.title }}</p>
-                <p><strong>Tác giả:</strong> {{ book.author }}</p>
-                <p><strong>ISBN:</strong> {{ book.isbn }}</p>
-                <p><strong>Danh mục:</strong> {{ book.category or 'Chưa phân loại' }}</p>
-                <p><strong>Nhà xuất bản:</strong> {{ book.publisher or 'N/A' }}</p>
-                <p><strong>Năm xuất bản:</strong> {{ book.publication_year or 'N/A' }}</p>
-                <p><strong>Vị trí:</strong> {{ book.location or 'N/A' }}</p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Tình trạng mượn</h5>
-            </div>
-            <div class="card-body">
-                {% set availability = book.get_availability_display() %}
-                
-                <div class="row">
-                    <div class="col-4">
-                        <div class="text-center">
-                            <h3 class="text-primary">{{ availability.total }}</h3>
-                            <small class="text-muted">Tổng số cuốn</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="text-center">
-                            <h3 class="text-success">{{ availability.available }}</h3>
-                            <small class="text-muted">Có sẵn</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="text-center">
-                            <h3 class="text-info">{{ availability.borrowed }}</h3>
-                            <small class="text-muted">Đang mượn</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <hr>
-                
-                <div class="mb-3">
-                    <strong>Trạng thái:</strong>
-                    <span class="badge {{ availability.badge_class }}">{{ availability.text }}</span>
-                </div>
-                
-                {% if availability.available > 0 %}
-                    <form method="POST" action="{{ url_for('loans.borrow_book', book_id=book.id) }}">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-book"></i> Mượn sách
-                        </button>
-                    </form>
-                {% else %}
-                    <button class="btn btn-secondary w-100" disabled>
-                        <i class="bi bi-book"></i> Hết sách
-                    </button>
-                {% endif %}
-                
-                {% if availability.borrowed > 0 %}
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle"></i>
-                            Hiện có {{ availability.borrowed }} cuốn đang được mượn
-                        </small>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Loan history (for librarians) -->
-{% if current_user.is_authenticated and current_user.is_librarian() %}
-    <div class="card shadow mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="bi bi-clock-history"></i> Lịch sử mượn trả
-            </h5>
-        </div>
-        <div class="card-body">
-            {% set loans = book.loans %}
-            {% if loans %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Người mượn</th>
-                                <th>Ngày mượn</th>
-                                <th>Hạn trả</th>
-                                <th>Trạng thái</th>
-                                <th>Ghi chú</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for loan in loans|sort(attribute='borrowed_date', reverse=true) %}
-                            <tr>
-                                <td>{{ loan.user.full_name }}</td>
-                                <td>{{ loan.borrowed_date.strftime('%d/%m/%Y') if loan.borrowed_date else 'N/A' }}</td>
-                                <td>{{ loan.due_date.strftime('%d/%m/%Y') if loan.due_date else 'N/A' }}</td>
-                                <td>
-                                    <span class="badge {% if loan.status == 'borrowed' %}bg-primary{% elif loan.status == 'returned' %}bg-success{% else %}bg-warning{% endif %}">
-                                        {{ loan.get_status_display() }}
-                                    </span>
-                                </td>
-                                <td>{{ loan.notes or '-' }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted text-center mb-0">Chưa có lịch sử mượn trả</p>
+<div class="book-detail-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="book-breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('books.index') }}">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('books.categories') }}">Danh mục</a></li>
+            {% if book.category %}
+                <li class="breadcrumb-item"><a href="{{ url_for('books.categories', category=book.category) }}">{{ book.category }}</a></li>
             {% endif %}
-        </div>
-    </div>
-{% endif %}
-</div>
+            <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
+        </ol>
+    </nav>
 
-<!-- Sidebar -->
-<div class="col-lg-4">
-    <!-- Book status card -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-primary text-white">
-            <h6 class="mb-0">
-                <i class="bi bi-info-circle"></i> Trạng thái sách
-            </h6>
+    <!-- Book Header -->
+    <div class="book-header">
+        <div class="book-cover">
+            <i class="bi bi-book"></i>
         </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span>Tổng số:</span>
-                <strong>{{ book.total_copies }}</strong>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span>Có sẵn:</span>
-                <strong class="text-success">{{ book.available_copies }}</strong>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span>Đang mượn:</span>
-                <strong class="text-primary">{{ book.total_copies - book.available_copies }}</strong>
-            </div>
-            <hr>
-            <div class="text-center">
-                <span class="badge {% if book.is_available() %}bg-success{% else %}bg-danger{% endif %} fs-6">
-                    {{ book.get_availability_status() }}
-                </span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Quick actions -->
-    <div class="card shadow mb-4">
-        <div class="card-header">
-            <h6 class="mb-0">
-                <i class="bi bi-lightning"></i> Thao tác nhanh
-            </h6>
-        </div>
-        <div class="card-body">
-            <div class="d-grid gap-2">
-                <a href="{{ url_for('books.search', q=book.title) }}" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-search"></i> Tìm sách tương tự
-                </a>
-                {% if book.category %}
-                    <a href="{{ url_for('books.categories', category=book.category) }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-collection"></i> Xem cùng danh mục
-                    </a>
+        <div class="book-title-section">
+            <h1 class="book-title">{{ book.title }}</h1>
+            <p class="book-author">Tác giả: {{ book.author }}</p>
+            <div class="book-meta">
+                <span class="book-category">{{ book.category or 'Chưa phân loại' }}</span>
+                {% if book.publication_year %}
+                    <span class="book-year">{{ book.publication_year }}</span>
                 {% endif %}
-                <a href="{{ url_for('books.search', q=book.author) }}" class="btn btn-outline-info btn-sm">
-                    <i class="bi bi-person"></i> Sách cùng tác giả
-                </a>
             </div>
         </div>
     </div>
-    
-    <!-- Book metadata -->
-    <div class="card shadow">
-        <div class="card-header">
-            <h6 class="mb-0">
-                <i class="bi bi-gear"></i> Thông tin kỹ thuật
-            </h6>
-        </div>
-        <div class="card-body">
-            <div class="small text-muted">
-                <div class="mb-1">
-                    <strong>ID:</strong> {{ book.id }}
-                </div>
-                <div class="mb-1">
-                    <strong>Ngày thêm:</strong> {{ book.created_at.strftime('%d/%m/%Y') if book.created_at else 'N/A' }}
-                </div>
-                <div class="mb-1">
-                    <strong>Cập nhật lần cuối:</strong> N/A
-                </div>
-                <div class="mb-1">
-                    <strong>Trạng thái:</strong> 
-                    <span class="badge {% if book.is_active %}bg-success{% else %}bg-danger{% endif %}">
-                        {{ 'Hoạt động' if book.is_active else 'Không hoạt động' }}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
 
-<!-- Related books -->
-{% if book.category and related_books %}
-<div class="row mt-5">
-    <div class="col-12">
-        <h3 class="mb-4">
-            <i class="bi bi-collection"></i> Sách cùng danh mục "{{ book.category }}"
-        </h3>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-            {% for related_book in related_books %}
-            <div class="col">
-                <div class="card h-100 book-card">
+    <!-- Main Content -->
+    <div class="book-content">
+        <div class="row">
+            <!-- Book Information -->
+            <div class="col-lg-8">
+                <div class="book-info-card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-info-circle"></i> Thông tin chi tiết</h3>
+                    </div>
                     <div class="card-body">
-                        <h6 class="card-title">
-                            <a href="{{ url_for('books.book_detail', book_id=related_book.id) }}" class="text-decoration-none">
-                                {{ related_book.title }}
-                            </a>
-                        </h6>
-                        <p class="card-text small text-muted">{{ related_book.author }}</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">
-                                <i class="bi bi-book"></i> {{ related_book.available_copies }}/{{ related_book.total_copies }}
-                            </small>
-                            <span class="badge {% if related_book.is_available() %}bg-success{% else %}bg-danger{% endif %}">
-                                {{ related_book.get_availability_status() }}
-                            </span>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="bi bi-upc-scan"></i> ISBN
+                                </div>
+                                <div class="info-value">{{ book.isbn }}</div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="bi bi-building"></i> Nhà xuất bản
+                                </div>
+                                <div class="info-value">{{ book.publisher or 'N/A' }}</div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="bi bi-calendar"></i> Năm xuất bản
+                                </div>
+                                <div class="info-value">{{ book.publication_year or 'N/A' }}</div>
+                            </div>
+                            
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="bi bi-geo-alt"></i> Vị trí
+                                </div>
+                                <div class="info-value">{{ book.location or 'N/A' }}</div>
+                            </div>
                         </div>
+                        
+                        {% if book.description %}
+                        <div class="book-description">
+                            <h4><i class="bi bi-text-paragraph"></i> Mô tả</h4>
+                            <p>{{ book.description }}</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            {% endfor %}
+            
+            <!-- Book Status & Actions -->
+            <div class="col-lg-4">
+                <div class="book-status-card">
+                    <div class="card-header">
+                        <h3><i class="bi bi-graph-up"></i> Tình trạng</h3>
+                    </div>
+                    <div class="card-body">
+                        {% set availability = book.get_availability_display() %}
+                        
+                        <!-- Status Overview -->
+                        <div class="status-overview">
+                            <div class="status-item">
+                                <div class="status-number total">{{ availability.total }}</div>
+                                <div class="status-label">Tổng số cuốn</div>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-number available">{{ availability.available }}</div>
+                                <div class="status-label">Có sẵn</div>
+                            </div>
+                            <div class="status-item">
+                                <div class="status-number borrowed">{{ availability.borrowed }}</div>
+                                <div class="status-label">Đang mượn</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Status -->
+                        <div class="current-status">
+                            <div class="status-badge {{ availability.badge_class }}">
+                                <i class="bi bi-circle-fill"></i>
+                                {{ availability.text }}
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            {% if availability.available > 0 %}
+                                <form method="POST" action="{{ url_for('loans.borrow_book', book_id=book.id) }}">
+                                    <button type="submit" class="btn btn-primary btn-borrow">
+                                        <i class="bi bi-book"></i> Mượn sách
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button class="btn btn-secondary btn-disabled" disabled>
+                                    <i class="bi bi-book-x"></i> Hết sách
+                                </button>
+                            {% endif %}
+                            
+                            {% if current_user.is_authenticated and current_user.is_librarian() %}
+                                <a href="{{ url_for('books.edit_book', book_id=book.id) }}" class="btn btn-outline-primary btn-edit">
+                                    <i class="bi bi-pencil"></i> Chỉnh sửa
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Additional Info -->
+                        {% if availability.borrowed > 0 %}
+                            <div class="additional-info">
+                                <i class="bi bi-info-circle"></i>
+                                Hiện có {{ availability.borrowed }} cuốn đang được mượn
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="text-center mt-3">
-            <a href="{{ url_for('books.categories', category=book.category) }}" class="btn btn-outline-primary">
-                <i class="bi bi-arrow-right"></i> Xem tất cả sách {{ book.category }}
-            </a>
+        
+        <!-- Related Books -->
+        {% if related_books %}
+        <div class="related-books-section">
+            <h3><i class="bi bi-collection"></i> Sách liên quan</h3>
+            <div class="related-books-grid">
+                {% for related_book in related_books %}
+                <div class="related-book-card">
+                    <div class="related-book-cover">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <div class="related-book-info">
+                        <h5>{{ related_book.title }}</h5>
+                        <p>{{ related_book.author }}</p>
+                        <a href="{{ url_for('books.book_detail', book_id=related_book.id) }}" class="btn btn-sm btn-outline-primary">
+                            Xem chi tiết
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
 {% endblock %} 

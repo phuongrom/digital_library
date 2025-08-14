@@ -7,31 +7,22 @@ class Loan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
-    loan_date = db.Column(db.DateTime, default=datetime.utcnow)
+    loan_date = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     due_date = db.Column(db.DateTime, nullable=False)
     return_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='borrowed')  # borrowed, returned, overdue
     
-    user = db.relationship('User', foreign_keys=[user_id])
-    book = db.relationship('Book', foreign_keys=[book_id])
+    # Relationships - bỏ backref để tránh conflict
+    user = db.relationship('User')
+    book = db.relationship('Book')
+    
+    def __repr__(self):
+        return f'<Loan {self.id}: {self.user.username} borrowed {self.book.title}>'
     
     def is_overdue(self):
         if self.status == 'returned':
             return False
-        if self.due_date:
-            return datetime.now() > self.due_date
-        return False
-    
-    def get_days_overdue(self):
-        if not self.is_overdue():
-            return 0
-        if self.due_date:
-            return (datetime.now() - self.due_date).days
-        return 0
-    
-    def return_book(self):
-        self.status = 'returned'
-        self.return_date = datetime.now()
+        return datetime.utcnow() > self.due_date
     
     def get_status_display(self):
         if self.status == 'returned':
@@ -41,5 +32,13 @@ class Loan(db.Model):
         else:
             return 'Đang mượn'
     
-    def __repr__(self):
-        return f'<Loan {self.id}: {self.book_id} -> {self.user_id}>' 
+    def get_days_remaining(self):
+        if self.status == 'returned':
+            return 0
+        remaining = self.due_date - datetime.utcnow()
+        return max(0, remaining.days)
+    
+    def return_book(self):
+        """Trả sách"""
+        self.status = 'returned'
+        self.return_date = datetime.utcnow() 

@@ -63,19 +63,35 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
+                        <div class="col-md-6 col-lg-3 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-book display-4 text-success mb-3"></i>
+                                    <h5 class="card-title">Quản lý Sách</h5>
+                                    <p class="card-text">Quản lý danh mục sách, thêm, sửa, xóa sách</p>
+                                    <a href="{{ url_for('books.admin_manage_books') }}" class="btn btn-outline-success w-100">
+                                        <i class="bi bi-gear"></i> Quản lý
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-3 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-journal-text display-4 text-info mb-3"></i>
+                                    <h5 class="card-title">Quản lý Mượn trả</h5>
+                                    <p class="card-text">Theo dõi và quản lý các lượt mượn trả sách</p>
+                                    <a href="{{ url_for('loans.admin_manage_loans') }}" class="btn btn-outline-info w-100">
+                                        <i class="bi bi-gear"></i> Quản lý
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="col-md-3 mb-2">
                             <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-primary w-100">
                                 <i class="bi bi-people"></i> Quản lý Users
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('admin.manage_books') }}" class="btn btn-outline-success w-100">
-                                <i class="bi bi-book"></i> Quản lý Sách
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('admin.manage_loans') }}" class="btn btn-outline-info w-100">
-                                <i class="bi bi-journal-text"></i> Quản lý Mượn trả
                             </a>
                         </div>
                         <div class="col-md-3 mb-2">
@@ -123,7 +139,7 @@
                         </div>
                         
                         <div class="text-center mt-3">
-                            <a href="{{ url_for('admin.manage_books') }}" class="btn btn-outline-success btn-sm">
+                            <a href="{{ url_for('books.admin_manage_books') }}" class="btn btn-outline-success btn-sm">
                                 <i class="bi bi-arrow-right"></i> Xem tất cả sách
                             </a>
                         </div>
@@ -180,77 +196,7 @@
     </div>
 
     <!-- System status -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">
-                        <i class="bi bi-activity"></i> Trạng thái hệ thống
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h6>Database</h6>
-                            <div class="progress mb-3" style="height: 20px;">
-                                <div class="progress-bar bg-success" style="width: 95%">95%</div>
-                            </div>
-                            <small class="text-muted">SQLite database hoạt động bình thường</small>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>Performance</h6>
-                            <div class="progress mb-3" style="height: 20px;">
-                                <div class="progress-bar bg-info" style="width: 88%">88%</div>
-                            </div>
-                            <small class="text-muted">Hiệu suất hệ thống tốt</small>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>Security</h6>
-                            <div class="progress mb-3" style="height: 20px;">
-                                <div class="progress-bar bg-warning" style="width: 92%">92%</div>
-                            </div>
-                            <small class="text-muted">Bảo mật hệ thống ổn định</small>
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Thông tin hệ thống:</h6>
-                            <ul class="list-unstyled">
-                                <li><i class="bi bi-check-circle text-success"></i> Flask application đang chạy</li>
-                                <li><i class="bi bi-check-circle text-success"></i> Database connection ổn định</li>
-                                <li><i class="bi bi-check-circle text-success"></i> User authentication hoạt động</li>
-                                <li><i class="bi bi-check-circle text-success"></i> File upload system sẵn sàng</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6>Cảnh báo:</h6>
-                            {% if overdue_loans > 0 %}
-                                <div class="alert alert-warning py-2">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                    Có {{ overdue_loans }} cuốn sách quá hạn cần xử lý
-                                </div>
-                            {% else %}
-                                <div class="alert alert-success py-2">
-                                    <i class="bi bi-check-circle"></i>
-                                    Không có sách quá hạn
-                                </div>
-                            {% endif %}
-                            
-                            {% if total_books == 0 %}
-                                <div class="alert alert-info py-2">
-                                    <i class="bi bi-info-circle"></i>
-                                    Chưa có sách nào trong hệ thống
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
     <!-- Quick reports -->
     <div class="row mt-4">
@@ -262,7 +208,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    <div class="row">
+                    <div class="row justify-content-between">
                         <div class="col-md-3 text-center">
                             <div class="border rounded p-3">
                                 <h4 class="text-primary">{{ (active_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
@@ -271,7 +217,7 @@
                         </div>
                         <div class="col-md-3 text-center">
                             <div class="border rounded p-3">
-                                <h4 class="text-success">{{ (returned_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
+                                <h4 class="text-success">{{ (active_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
                                 <small class="text-muted">Tỷ lệ sách đã trả</small>
                             </div>
                         </div>
@@ -279,12 +225,6 @@
                             <div class="border rounded p-3">
                                 <h4 class="text-warning">{{ (overdue_loans / total_loans * 100)|round(1) if total_loans > 0 else 0 }}%</h4>
                                 <small class="text-muted">Tỷ lệ sách quá hạn</small>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-center">
-                            <div class="border rounded p-3">
-                                <h4 class="text-info">{{ (total_users / 100)|round(1) if total_users > 0 else 0 }}%</h4>
-                                <small class="text-muted">Tỷ lệ tăng trưởng users</small>
                             </div>
                         </div>
                     </div>

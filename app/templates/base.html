@@ -23,19 +23,11 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('books.index') }}">
-                <i class="bi bi-book"></i> Thư viện số
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'books.index' %}active{% endif %}" href="{{ url_for('books.index') }}">
-                            <i class="bi bi-house"></i> Trang chủ
+                            <i class="bi bi-house-door-fill"></i> Trang chủ
                         </a>
                     </li>
                     <li class="nav-item">
@@ -45,7 +37,7 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'books.categories' %}active{% endif %}" href="{{ url_for('books.categories') }}">
-                            <i class="bi bi-collection"></i> Danh mục
+                            <i class="bi bi-collection-fill"></i> Danh mục
                         </a>
                     </li>
                     {% if current_user.is_authenticated %}
@@ -57,7 +49,7 @@
                         {% if current_user.is_librarian() %}
                             <li class="nav-item">
                                 <a class="nav-link {% if request.endpoint == 'loans.overdue' %}active{% endif %}" href="{{ url_for('loans.overdue') }}">
-                                    <i class="bi bi-exclamation-triangle"></i> Sách quá hạn
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Sách quá hạn
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -68,14 +60,14 @@
                         {% endif %}
                         {% if current_user.is_admin() %}
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-gear"></i> Quản trị
+                                <a class="nav-link dropdown-toggle" href="#" role="button" aria-expanded="false">
+                                    <i class="bi bi-gear-fill"></i> Quản trị
                                 </a>
                                 <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}">Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('admin.manage_users') }}">Quản lý Users</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('admin.manage_books') }}">Quản lý Sách</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('admin.manage_loans') }}">Quản lý Mượn trả</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.manage_users') }}"><i class="bi bi-people-fill"></i> Quản lý Users</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('books.admin_manage_books') }}"><i class="bi bi-book-fill"></i> Quản lý Sách</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('loans.admin_manage_loans') }}"><i class="bi bi-arrow-left-right"></i> Quản lý Mượn trả</a></li>
                                 </ul>
                             </li>
                         {% endif %}
@@ -97,13 +89,13 @@
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="bi bi-person-circle"></i> {{ current_user.full_name }}
+                            <a class="nav-link dropdown-toggle" href="#" role="button" aria-expanded="false">
+                                <i class="bi bi-person-circle-fill"></i> {{ current_user.full_name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">Thông tin cá nhân</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i class="bi bi-person-fill"></i> Thông tin cá nhân</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Đăng xuất</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
                             </ul>
                         </li>
                     {% else %}
@@ -114,7 +106,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('auth.register') }}">
-                                <i class="bi bi-person-plus"></i> Đăng ký
+                                <i class="bi bi-person-plus-fill"></i> Đăng ký
                             </a>
                         </li>
                     {% endif %}
@@ -147,73 +139,66 @@
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
-    <!-- Fix dropdown functionality -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dropdown fix script loaded');
-            
-            // Initialize Bootstrap dropdowns
-            var dropdownElementList = [].slice.call(document.querySelectorAll('.dropdown-toggle'));
-            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
-                return new bootstrap.Dropdown(dropdownToggleEl);
-            });
-            
-            // Manual dropdown toggle for debugging
             document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+                toggle.removeAttribute('data-bs-toggle');
+                toggle.removeAttribute('data-bs-popper');
+                
                 toggle.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    var dropdownMenu = this.nextElementSibling;
+                    console.log('Dropdown clicked:', this.textContent.trim());
+                    
+                    // Find the dropdown menu
+                    const dropdownMenu = this.nextElementSibling;
                     if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
-                        var isShown = dropdownMenu.classList.contains('show');
+                        console.log('Found dropdown menu, toggling...');
                         
-                        // Close all other dropdowns
-                        document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
-                            if (menu !== dropdownMenu) {
-                                menu.classList.remove('show');
-                            }
-                        });
-                        
-                        // Toggle current dropdown
+                        // Toggle show class
+                        const isShown = dropdownMenu.classList.contains('show');
                         if (isShown) {
                             dropdownMenu.classList.remove('show');
+                            this.classList.remove('show');
+                            this.setAttribute('aria-expanded', 'false');
                         } else {
+                            // Close all other dropdowns first
+                            document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                                menu.classList.remove('show');
+                            });
+                            document.querySelectorAll('.dropdown-toggle.show').forEach(function(toggle) {
+                                toggle.classList.remove('show');
+                                toggle.setAttribute('aria-expanded', 'false');
+                            });
+                            
+                            // Show this dropdown
                             dropdownMenu.classList.add('show');
+                            this.classList.add('show');
+                            this.setAttribute('aria-expanded', 'true');
                         }
                         
-                        // Update aria-expanded
-                        this.setAttribute('aria-expanded', !isShown);
-                        
-                        console.log('Dropdown toggled:', !isShown);
+                        console.log('Dropdown state:', !isShown);
+                    } else {
+                        console.log('No dropdown menu found');
                     }
                 });
             });
             
-            // Close dropdown when clicking outside
             document.addEventListener('click', function(event) {
                 if (!event.target.classList.contains('dropdown-toggle') && 
                     !event.target.closest('.dropdown-menu')) {
-                    document.querySelectorAll('.dropdown-menu.show').forEach(function(dropdown) {
-                        dropdown.classList.remove('show');
+                    
+                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                        menu.classList.remove('show');
                     });
-                    document.querySelectorAll('.dropdown-toggle[aria-expanded="true"]').forEach(function(toggle) {
+                    document.querySelectorAll('.dropdown-toggle.show').forEach(function(toggle) {
+                        toggle.classList.remove('show');
                         toggle.setAttribute('aria-expanded', 'false');
                     });
                 }
             });
             
-            // Ensure dropdowns work on mobile
-            var navbarToggler = document.querySelector('.navbar-toggler');
-            var navbarCollapse = document.querySelector('.navbar-collapse');
-            
-            if (navbarToggler && navbarCollapse) {
-                navbarToggler.addEventListener('click', function() {
-                    navbarCollapse.classList.toggle('show');
-                });
-            }
-            
-            console.log('Dropdown fix script completed');
         });
     </script>
     

@@ -19,7 +19,12 @@
                 <h5 class="mb-0">
                     <i class="bi bi-list-ul"></i> Danh sách người dùng
                 </h5>
-                <span class="badge bg-primary fs-6">{{ users.total }} users</span>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary fs-6">{{ users.total }} users</span>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                        <i class="bi bi-person-plus"></i> Thêm User
+                    </button>
+                </div>
             </div>
         </div>
         <div class="card-body p-0">
@@ -76,7 +81,7 @@
                                     <!-- Change role -->
                                     <div class="btn-group" role="group">
                                         <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" 
-                                                data-bs-toggle="dropdown" aria-expanded="false"
+                                                aria-expanded="false"
                                                 {% if user.id == current_user.id %}disabled{% endif %}>
                                             <i class="bi bi-gear"></i>
                                         </button>
@@ -167,87 +172,6 @@
         </div>
     </div>
 
-    <!-- User statistics -->
-    <div class="row mt-4">
-        <div class="col-md-3">
-            <div class="card text-center bg-primary text-white">
-                <div class="card-body">
-                    <i class="bi bi-people" style="font-size: 2rem;"></i>
-                    <h4 class="card-title mt-2">{{ users.total }}</h4>
-                    <p class="card-text mb-0">Tổng số users</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center bg-success text-white">
-                <div class="card-body">
-                    <i class="bi bi-person-check" style="font-size: 2rem;"></i>
-                    <h4 class="card-title mt-2">{{ users.items|selectattr('is_active')|list|length }}</h4>
-                    <p class="card-text mb-0">Users hoạt động</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center bg-warning text-dark">
-                <div class="card-body">
-                    <i class="bi bi-person-workspace" style="font-size: 2rem;"></i>
-                    <h4 class="card-title mt-2">{{ users.items|selectattr('role', 'equalto', 'librarian')|list|length }}</h4>
-                    <p class="card-text mb-0">Thủ thư</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-center bg-danger text-white">
-                <div class="card-body">
-                    <i class="bi bi-shield" style="font-size: 2rem;"></i>
-                    <h4 class="card-title mt-2">{{ users.items|selectattr('role', 'equalto', 'admin')|list|length }}</h4>
-                    <p class="card-text mb-0">Admin</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Role distribution chart -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h6 class="mb-0">
-                        <i class="bi bi-pie-chart"></i> Phân bố vai trò
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <h6>User ({{ users.items|selectattr('role', 'equalto', 'user')|list|length }})</h6>
-                            <div class="progress mb-3" style="height: 20px;">
-                                {% set user_count = users.items|selectattr('role', 'equalto', 'user')|list|length %}
-                                {% set user_percentage = (user_count / users.total * 100)|round %}
-                                <div class="progress-bar bg-primary" style="width: {{ user_percentage }}%">{{ user_percentage }}%</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>Librarian ({{ users.items|selectattr('role', 'equalto', 'librarian')|list|length }})</h6>
-                            <div class="progress mb-3" style="height: 20px;">
-                                {% set librarian_count = users.items|selectattr('role', 'equalto', 'librarian')|list|length %}
-                                {% set librarian_percentage = (librarian_count / users.total * 100)|round %}
-                                <div class="progress-bar bg-warning" style="width: {{ librarian_percentage }}%">{{ librarian_percentage }}%</div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>Admin ({{ users.items|selectattr('role', 'equalto', 'admin')|list|length }})</h6>
-                            <div class="progress mb-3" style="height: 20px;">
-                                {% set admin_count = users.items|selectattr('role', 'equalto', 'admin')|list|length %}
-                                {% set admin_percentage = (admin_count / users.total * 100)|round %}
-                                <div class="progress-bar bg-danger" style="width: {{ admin_percentage }}%">{{ admin_percentage }}%</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Quick actions -->
     <div class="row mt-4">
         <div class="col-12">
@@ -277,4 +201,265 @@
         </div>
     </div>
 </div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="bi bi-person-plus"></i> Thêm User Mới
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.add_user') }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">
+                                    <i class="bi bi-person"></i> Tên đăng nhập *
+                                </label>
+                                <input type="text" class="form-control" id="username" name="username" 
+                                       required placeholder="Nhập tên đăng nhập">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="bi bi-envelope"></i> Email *
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       required placeholder="Nhập email">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="bi bi-person-badge"></i> Họ và tên *
+                                </label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" 
+                                       required placeholder="Nhập họ và tên">
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">
+                                    <i class="bi bi-lock"></i> Mật khẩu *
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           required placeholder="Nhập mật khẩu">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePassword()">
+                                        <i class="bi bi-eye" id="eye-icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">
+                                    <i class="bi bi-lock-fill"></i> Xác nhận mật khẩu *
+                                </label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                                       required placeholder="Nhập lại mật khẩu">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="role" class="form-label">
+                                    <i class="bi bi-shield"></i> Vai trò *
+                                </label>
+                                <select class="form-select" id="role" name="role" required>
+                                    <option value="">Chọn vai trò</option>
+                                    <option value="user">User</option>
+                                    <option value="librarian">Librarian</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">
+                            Kích hoạt tài khoản ngay
+                        </label>
+                    </div>
+                </div>
+                    
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Hủy
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Thêm User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eye-icon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.className = 'bi bi-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.className = 'bi bi-eye';
+    }
+}
+
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (password !== confirmPassword) {
+        this.setCustomValidity('Mật khẩu không khớp');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+// Form validation before submit
+document.querySelector('form[action*="add_user"]').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('Mật khẩu xác nhận không khớp!');
+        return false;
+    }
+});
+
+// Ensure modal is properly initialized
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap modal
+    const addUserModal = document.getElementById('addUserModal');
+    if (addUserModal) {
+        const modal = new bootstrap.Modal(addUserModal, {
+            backdrop: 'static',
+            keyboard: false,
+            focus: true
+        });
+        
+        // Force modal to be on top
+        addUserModal.style.zIndex = '1055';
+    }
+});
+
+// Fix modal z-index when shown
+document.getElementById('addUserModal').addEventListener('show.bs.modal', function() {
+    // Force modal to be on top
+    this.style.zIndex = '1055';
+    
+    // Ensure backdrop is also on top
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+        backdrop.style.zIndex = '1054';
+    }
+    
+    // Reset form
+    document.querySelector('form[action*="add_user"]').reset();
+    document.getElementById('is_active').checked = true;
+});
+
+// Fix admin table dropdowns - stable version
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Fixing admin dropdowns...');
+    
+    // Fix all dropdowns in the admin table
+    document.querySelectorAll('.dropdown-toggle').forEach(function(toggle) {
+        // Remove Bootstrap attributes to prevent conflicts
+        toggle.removeAttribute('data-bs-toggle');
+        toggle.removeAttribute('data-bs-popper');
+        
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Admin dropdown clicked');
+            
+            // Find the dropdown menu
+            const dropdownMenu = this.nextElementSibling;
+            if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                console.log('Found dropdown menu, toggling...');
+                
+                // Toggle show class
+                const isShown = dropdownMenu.classList.contains('show');
+                if (isShown) {
+                    dropdownMenu.classList.remove('show');
+                    this.classList.remove('show');
+                    this.setAttribute('aria-expanded', 'false');
+                } else {
+                    // Close all other dropdowns first
+                    document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                        menu.classList.remove('show');
+                    });
+                    document.querySelectorAll('.dropdown-toggle.show').forEach(function(toggle) {
+                        toggle.classList.remove('show');
+                        toggle.setAttribute('aria-expanded', 'false');
+                    });
+                    
+                    // Show this dropdown
+                    dropdownMenu.classList.add('show');
+                    this.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+                
+                console.log('Dropdown state:', !isShown);
+            } else {
+                console.log('No dropdown menu found');
+            }
+        });
+        
+        // Prevent dropdown from closing when hovering over it
+        const dropdownMenu = toggle.nextElementSibling;
+        if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+            dropdownMenu.addEventListener('mouseenter', function() {
+                // Keep dropdown open when hovering over it
+                this.classList.add('show');
+                toggle.classList.add('show');
+                toggle.setAttribute('aria-expanded', 'true');
+            });
+            
+            dropdownMenu.addEventListener('mouseleave', function() {
+                // Close dropdown when leaving it
+                this.classList.remove('show');
+                toggle.classList.remove('show');
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.classList.contains('dropdown-toggle') && 
+            !event.target.closest('.dropdown-menu')) {
+            
+            document.querySelectorAll('.dropdown-menu.show').forEach(function(menu) {
+                menu.classList.remove('show');
+            });
+            document.querySelectorAll('.dropdown-toggle.show').forEach(function(toggle) {
+                toggle.classList.remove('show');
+                toggle.setAttribute('aria-expanded', 'false');
+            });
+        }
+    });
+    
+    // Prevent table row hover from affecting dropdowns
+    document.querySelectorAll('.admin-table tbody tr').forEach(function(row) {
+        row.addEventListener('mouseenter', function() {
+            // Don't close dropdowns when hovering over table rows
+        });
+    });
+    
+    console.log('Admin dropdowns fixed - stable version');
+});
+</script>
+
 {% endblock %} 

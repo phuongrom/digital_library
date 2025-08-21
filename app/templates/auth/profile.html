@@ -5,7 +5,7 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <h1 class="h2 mb-4">
+        <h1 class="h2 mb-4 search-page-title">
             <i class="bi bi-person-circle"></i> Thông tin cá nhân
         </h1>
     </div>
@@ -169,86 +169,6 @@
                         </div>
                     </div>
                     <small class="text-muted">Tỷ lệ trả sách đúng hạn</small>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Quick actions -->
-        <div class="card shadow mb-4">
-            <div class="card-header">
-                <h6 class="mb-0">
-                    <i class="bi bi-lightning"></i> Thao tác nhanh
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('loans.my_loans') }}" class="btn btn-outline-primary">
-                        <i class="bi bi-journal-text"></i> Sách đã mượn
-                    </a>
-                    
-                    <a href="{{ url_for('books.search') }}" class="btn btn-outline-success">
-                        <i class="bi bi-search"></i> Tìm kiếm sách
-                    </a>
-                    
-                    {% if current_user.is_librarian() %}
-                        <a href="{{ url_for('loans.overdue') }}" class="btn btn-outline-warning">
-                            <i class="bi bi-exclamation-triangle"></i> Sách quá hạn
-                        </a>
-                        
-                        <a href="{{ url_for('loans.statistics') }}" class="btn btn-outline-info">
-                            <i class="bi bi-graph-up"></i> Thống kê
-                        </a>
-                    {% endif %}
-                    
-                    {% if current_user.is_admin() %}
-                        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-danger">
-                            <i class="bi bi-gear"></i> Quản trị
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        <!-- Account status -->
-        <div class="card shadow">
-            <div class="card-header bg-warning text-dark">
-                <h6 class="mb-0">
-                    <i class="bi bi-shield-check"></i> Trạng thái tài khoản
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-2">
-                    <i class="bi bi-check-circle text-success"></i>
-                    <span class="ms-2">Xác thực email</span>
-                </div>
-                
-                <div class="mb-2">
-                    <i class="bi bi-check-circle text-success"></i>
-                    <span class="ms-2">Đăng nhập an toàn</span>
-                </div>
-                
-                <div class="mb-2">
-                    {% if current_user.is_active %}
-                        <i class="bi bi-check-circle text-success"></i>
-                        <span class="ms-2">Tài khoản hoạt động</span>
-                    {% else %}
-                        <i class="bi bi-x-circle text-danger"></i>
-                        <span class="ms-2">Tài khoản bị vô hiệu hóa</span>
-                    {% endif %}
-                </div>
-                
-                <div class="mb-2">
-                    <i class="bi bi-clock text-info"></i>
-                    <span class="ms-2">Thành viên từ {{ current_user.created_at.strftime('%d/%m/%Y') if current_user.created_at else 'N/A' }}</span>
-                </div>
-                
-                <hr>
-                
-                <div class="text-center">
-                    <small class="text-muted">
-                        <i class="bi bi-info-circle"></i>
-                        Tài khoản của bạn đang hoạt động bình thường
-                    </small>
                 </div>
             </div>
         </div>

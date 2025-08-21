@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initSearchEnhancement();
     initCardInteractions();
     initFormValidation();
-    initThemeToggle();
     initScrollEffects();
 });
 
@@ -314,46 +313,6 @@ function showFormError(message) {
     }, 5000);
 }
 
-function initThemeToggle() {
-    const currentTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', currentTheme);
-
-    if (!document.querySelector('.theme-toggle')) {
-        const themeToggle = document.createElement('button');
-        themeToggle.className = 'btn btn-outline-primary theme-toggle';
-        themeToggle.innerHTML = `
-            <i class="bi bi-${currentTheme === 'dark' ? 'sun' : 'moon'}"></i>
-        `;
-        themeToggle.style.cssText = `
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            z-index: 1000;
-            border-radius: 50%;
-            width: 3rem;
-            height: 3rem;
-            padding: 0;
-            box-shadow: var(--shadow-lg);
-        `;
-
-        themeToggle.addEventListener('click', toggleTheme);
-        document.body.appendChild(themeToggle);
-    }
-}
-
-function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    
-    const themeToggle = document.querySelector('.theme-toggle');
-    if (themeToggle) {
-        themeToggle.innerHTML = `<i class="bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}"></i>`;
-    }
-}
-
 function initScrollEffects() {
     let ticking = false;
 
@@ -498,5 +457,4 @@ window.DigitalLibrary = {
     showLoading,
     showSuccess,
     showError,
-    toggleTheme
 }; 

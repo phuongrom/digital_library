@@ -6,7 +6,7 @@
 <div class="admin-container">
     <div class="row">
         <div class="col-12">
-            <h1 class="h2 mb-4">
+            <h1 class="h2 mb-4 search-page-title">
                 <i class="bi bi-gear"></i> Admin Dashboard
             </h1>
         </div>
@@ -47,59 +47,6 @@
                     <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
                     <h3 class="card-title mt-2">{{ overdue_loans }}</h3>
                     <p class="card-text mb-0">Sách quá hạn</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick actions -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-lightning"></i> Thao tác nhanh
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 col-lg-3 mb-4">
-                            <div class="card h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-book display-4 text-success mb-3"></i>
-                                    <h5 class="card-title">Quản lý Sách</h5>
-                                    <p class="card-text">Quản lý danh mục sách, thêm, sửa, xóa sách</p>
-                                    <a href="{{ url_for('books.admin_manage_books') }}" class="btn btn-outline-success w-100">
-                                        <i class="bi bi-gear"></i> Quản lý
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 col-lg-3 mb-4">
-                            <div class="card h-100">
-                                <div class="card-body text-center">
-                                    <i class="bi bi-journal-text display-4 text-info mb-3"></i>
-                                    <h5 class="card-title">Quản lý Mượn trả</h5>
-                                    <p class="card-text">Theo dõi và quản lý các lượt mượn trả sách</p>
-                                    <a href="{{ url_for('loans.admin_manage_loans') }}" class="btn btn-outline-info w-100">
-                                        <i class="bi bi-gear"></i> Quản lý
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-outline-primary w-100">
-                                <i class="bi bi-people"></i> Quản lý Users
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('loans.statistics') }}" class="btn btn-outline-warning w-100">
-                                <i class="bi bi-graph-up"></i> Thống kê chi tiết
-                            </a>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

@@ -41,7 +41,6 @@
                     <span class="checkmark"></span>
                     Ghi nhớ đăng nhập
                 </label>
-                <a href="#" class="forgot-password">Quên mật khẩu?</a>
             </div>
             
             <button type="submit" class="login-btn">
@@ -50,25 +49,10 @@
             </button>
         </form>
         
-        <div class="login-divider">
-            <span>hoặc</span>
-        </div>
-        
-        <div class="social-login">
-            <button class="social-btn google-btn">
-                <i class="bi bi-google"></i>
-                <span>Google</span>
-            </button>
-            <button class="social-btn facebook-btn">
-                <i class="bi bi-facebook"></i>
-                <span>Facebook</span>
-            </button>
-        </div>
-        
         <div class="login-footer">
             <p>Chưa có tài khoản? 
-                <a href="{{ url_for('auth.register') }}" class="register-link">
-                    Đăng ký ngay
+                <a class="register-link" href="{{ url_for('auth.register') }}">
+                    </i> Đăng ký ngay
                 </a>
             </p>
         </div>

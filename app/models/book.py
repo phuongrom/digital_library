@@ -18,7 +18,8 @@ class Book(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    loans = db.relationship('Loan', foreign_keys='Loan.book_id')
+    # Sử dụng back_populates thay vì backref
+    loans = db.relationship('Loan', back_populates='book')
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

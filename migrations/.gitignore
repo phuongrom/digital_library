@@ -1,0 +1,9 @@
+# Generated migration files
+versions/*.py
+!versions/__init__.py
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

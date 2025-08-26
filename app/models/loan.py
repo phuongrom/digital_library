@@ -12,9 +12,9 @@ class Loan(db.Model):
     return_date = db.Column(db.DateTime)
     status = db.Column(db.String(20), default='borrowed')  # borrowed, returned, overdue
     
-    # Relationships - bỏ backref để tránh conflict
-    user = db.relationship('User')
-    book = db.relationship('Book')
+    # Relationships - sử dụng back_populates để tránh conflict
+    user = db.relationship('User', back_populates='loans')
+    book = db.relationship('Book', back_populates='loans')
     
     def __repr__(self):
         return f'<Loan {self.id}: {self.user.username} borrowed {self.book.title}>'

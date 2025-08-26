@@ -15,7 +15,8 @@ class User(UserMixin, db.Model):
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    loans = db.relationship('Loan', backref='user_ref', lazy=True)
+    # Sử dụng back_populates thay vì backref
+    loans = db.relationship('Loan', back_populates='user')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

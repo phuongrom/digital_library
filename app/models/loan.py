@@ -42,3 +42,10 @@ class Loan(db.Model):
         """Trả sách"""
         self.status = 'returned'
         self.return_date = datetime.utcnow() 
+    
+    def get_days_overdue(self):
+        """Lấy số ngày quá hạn"""
+        if self.status == 'returned' or not self.is_overdue():
+            return 0
+        overdue = datetime.utcnow() - self.due_date
+        return overdue.days 

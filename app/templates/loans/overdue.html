@@ -88,8 +88,7 @@
                             <td>
                                 <span class="badge bg-danger">
                                     {% if loan.due_date %}
-                                        {% set days_overdue = ((moment().date() - loan.due_date.date()).days) %}
-                                        {{ days_overdue }} ngày
+                                        {{ loan.get_days_overdue() }} ngày
                                     {% else %}
                                         N/A
                                     {% endif %}
@@ -152,7 +151,7 @@
                         
                         {% for loan in loans %}
                             {% if loan.due_date %}
-                                {% set days_overdue = ((moment().date() - loan.due_date.date()).days) %}
+                                {% set days_overdue = loan.get_days_overdue() %}
                                 {% if days_overdue < 8 %}
                                     {% set overdue_1_7 = overdue_1_7 + 1 %}
                                 {% elif days_overdue < 31 %}

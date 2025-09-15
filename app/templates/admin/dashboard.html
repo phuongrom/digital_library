@@ -44,6 +44,15 @@
         <div class="col-md-3">
             <div class="card text-center bg-warning text-dark">
                 <div class="card-body">
+                    <i class="bi bi-clock-history" style="font-size: 2rem;"></i>
+                    <h3 class="card-title mt-2">{{ pending_loans }}</h3>
+                    <p class="card-text mb-0">Yêu cầu chờ duyệt</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-danger text-white">
+                <div class="card-body">
                     <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
                     <h3 class="card-title mt-2">{{ overdue_loans }}</h3>
                     <p class="card-text mb-0">Sách quá hạn</p>
@@ -51,6 +60,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Quick actions -->
+    {% if pending_loans > 0 or return_requests > 0 or extend_requests > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Có {{ pending_loans + return_requests + extend_requests }} yêu cầu đang chờ duyệt!</strong>
+                <div class="mt-2">
+                    {% if pending_loans > 0 %}
+                    <a href="{{ url_for('admin.loan_requests') }}" class="btn btn-warning btn-sm me-2">
+                        <i class="bi bi-clock-history me-1"></i>
+                        {{ pending_loans }} yêu cầu mượn
+                    </a>
+                    {% endif %}
+                    {% if return_requests > 0 %}
+                    <a href="{{ url_for('admin.return_requests') }}" class="btn btn-info btn-sm me-2">
+                        <i class="bi bi-arrow-return-left me-1"></i>
+                        {{ return_requests }} yêu cầu trả
+                    </a>
+                    {% endif %}
+                    {% if extend_requests > 0 %}
+                    <a href="{{ url_for('admin.extend_requests') }}" class="btn btn-primary btn-sm me-2">
+                        <i class="bi bi-arrow-clockwise me-1"></i>
+                        {{ extend_requests }} yêu cầu gia hạn
+                    </a>
+                    {% endif %}
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Recent activities -->
     <div class="row">
@@ -180,4 +222,87 @@
         </div>
     </div>
 </div>
+
+<script>
+// Cập nhật thống kê real-time cho admin
+function updateStats() {
+    fetch('/admin/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('Error fetching stats:', data.error);
+                return;
+            }
+            
+            // Cập nhật số yêu cầu chờ duyệt
+            const pendingElement = document.querySelector('.card.bg-warning .card-title');
+            if (pendingElement) {
+                pendingElement.textContent = data.pending_loans;
+            }
+            
+            // Cập nhật số sách quá hạn
+            const overdueElement = document.querySelector('.card.bg-danger .card-title');
+            if (overdueElement) {
+                overdueElement.textContent = data.overdue_loans;
+            }
+            
+            // Cập nhật alert nếu có yêu cầu chờ duyệt
+            const alertElement = document.querySelector('.alert-warning');
+            const totalRequests = data.pending_loans + data.return_requests + data.extend_requests;
+            
+            if (totalRequests > 0) {
+                if (!alertElement) {
+                    // Tạo alert mới nếu chưa có
+                    let buttonsHtml = '';
+                    if (data.pending_loans > 0) {
+                        buttonsHtml += `<a href="{{ url_for('admin.loan_requests') }}" class="btn btn-warning btn-sm me-2"><i class="bi bi-clock-history me-1"></i>${data.pending_loans} yêu cầu mượn</a>`;
+                    }
+                    if (data.return_requests > 0) {
+                        buttonsHtml += `<a href="{{ url_for('admin.return_requests') }}" class="btn btn-info btn-sm me-2"><i class="bi bi-arrow-return-left me-1"></i>${data.return_requests} yêu cầu trả</a>`;
+                    }
+                    if (data.extend_requests > 0) {
+                        buttonsHtml += `<a href="{{ url_for('admin.extend_requests') }}" class="btn btn-primary btn-sm me-2"><i class="bi bi-arrow-clockwise me-1"></i>${data.extend_requests} yêu cầu gia hạn</a>`;
+                    }
+                    
+                    const alertHtml = `
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>Có ${totalRequests} yêu cầu đang chờ duyệt!</strong>
+                                    <div class="mt-2">${buttonsHtml}</div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    const statsRow = document.querySelector('.admin-stats');
+                    if (statsRow) {
+                        statsRow.insertAdjacentHTML('afterend', alertHtml);
+                    }
+                } else {
+                    // Cập nhật alert hiện có
+                    const strongElement = alertElement.querySelector('strong');
+                    if (strongElement) {
+                        strongElement.textContent = `Có ${totalRequests} yêu cầu đang chờ duyệt!`;
+                    }
+                }
+            } else if (alertElement) {
+                // Ẩn alert nếu không còn yêu cầu chờ duyệt
+                alertElement.remove();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching stats:', error);
+        });
+}
+
+// Cập nhật thống kê mỗi 30 giây
+setInterval(updateStats, 30000);
+
+// Cập nhật ngay khi load trang
+document.addEventListener('DOMContentLoaded', function() {
+    updateStats();
+});
+</script>
 {% endblock %} 

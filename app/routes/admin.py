@@ -28,6 +28,9 @@ def admin_dashboard():
     total_loans = Loan.query.count()
     
     # Thống kê mượn sách
+    pending_loans = Loan.query.filter_by(status='pending').count()
+    return_requests = Loan.query.filter_by(status='return_requested').count()
+    extend_requests = Loan.query.filter_by(status='extend_requested').count()
     active_loans = Loan.query.filter_by(status='borrowed').count()
     returned_loans = Loan.query.filter_by(status='returned').count()
     overdue_loans = Loan.query.filter(
@@ -52,6 +55,9 @@ def admin_dashboard():
                          total_users=total_users,
                          total_books=total_books,
                          total_loans=total_loans,
+                         pending_loans=pending_loans,
+                         return_requests=return_requests,
+                         extend_requests=extend_requests,
                          active_loans=active_loans,
                          returned_loans=returned_loans,
                          overdue_loans=overdue_loans,
@@ -184,4 +190,292 @@ def add_user():
 def clear_add_user_session():
     session.pop('add_user_form_data', None)
     session.pop('add_user_errors', None)
-    return '', 204 
+    return '', 204
+
+@admin_bp.route('/admin/loan-requests')
+@login_required
+@admin_required
+def loan_requests():
+    """Trang duyệt yêu cầu mượn sách"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # Lấy danh sách yêu cầu mượn sách chờ duyệt
+    pending_loans = Loan.query.filter_by(status='pending').order_by(Loan.loan_date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Thống kê
+    total_pending = Loan.query.filter_by(status='pending').count()
+    total_approved_today = Loan.query.filter(
+        Loan.status == 'borrowed',
+        Loan.loan_date >= datetime.utcnow().date()
+    ).count()
+    
+    return render_template('admin/loan_requests.html', 
+                         pending_loans=pending_loans,
+                         total_pending=total_pending,
+                         total_approved_today=total_approved_today)
+
+@admin_bp.route('/admin/loan-requests/approve/<int:loan_id>', methods=['POST'])
+@login_required
+@admin_required
+def approve_loan_request(loan_id):
+    """Duyệt yêu cầu mượn sách"""
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'pending':
+        flash('Yêu cầu này không còn chờ duyệt!', 'warning')
+        return redirect(url_for('admin.loan_requests'))
+    
+    try:
+        # Kiểm tra sách còn khả dụng không
+        if not loan.book.is_available():
+            flash(f'Sách "{loan.book.title}" hiện không còn khả dụng!', 'warning')
+            return redirect(url_for('admin.loan_requests'))
+        
+        # Duyệt yêu cầu
+        loan.approve()
+        db.session.commit()
+        
+        flash(f'Đã duyệt yêu cầu mượn sách "{loan.book.title}" của {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi duyệt yêu cầu!', 'danger')
+    
+    return redirect(url_for('admin.loan_requests'))
+
+@admin_bp.route('/admin/loan-requests/reject/<int:loan_id>', methods=['POST'])
+@login_required
+@admin_required
+def reject_loan_request(loan_id):
+    """Từ chối yêu cầu mượn sách"""
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'pending':
+        flash('Yêu cầu này không còn chờ duyệt!', 'warning')
+        return redirect(url_for('admin.loan_requests'))
+    
+    try:
+        # Từ chối yêu cầu
+        loan.reject()
+        db.session.commit()
+        
+        flash(f'Đã từ chối yêu cầu mượn sách "{loan.book.title}" của {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi từ chối yêu cầu!', 'danger')
+    
+    return redirect(url_for('admin.loan_requests'))
+
+@admin_bp.route('/admin/loan-requests/bulk-action', methods=['POST'])
+@login_required
+@admin_required
+def bulk_loan_action():
+    """Xử lý hàng loạt yêu cầu mượn sách"""
+    action = request.form.get('action')
+    loan_ids = request.form.getlist('loan_ids')
+    
+    if not loan_ids:
+        flash('Vui lòng chọn ít nhất một yêu cầu!', 'warning')
+        return redirect(url_for('admin.loan_requests'))
+    
+    if action not in ['approve', 'reject']:
+        flash('Hành động không hợp lệ!', 'danger')
+        return redirect(url_for('admin.loan_requests'))
+    
+    try:
+        loans = Loan.query.filter(
+            Loan.id.in_(loan_ids),
+            Loan.status == 'pending'
+        ).all()
+        
+        success_count = 0
+        for loan in loans:
+            if action == 'approve':
+                if loan.book.is_available():
+                    loan.approve()
+                    success_count += 1
+            else:  # reject
+                loan.reject()
+                success_count += 1
+        
+        db.session.commit()
+        
+        action_text = "duyệt" if action == 'approve' else "từ chối"
+        flash(f'Đã {action_text} {success_count} yêu cầu thành công!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi xử lý hàng loạt!', 'danger')
+    
+    return redirect(url_for('admin.loan_requests'))
+
+@admin_bp.route('/admin/return-requests')
+@login_required
+@admin_required
+def return_requests():
+    """Trang duyệt yêu cầu trả sách"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # Lấy danh sách yêu cầu trả sách chờ duyệt
+    return_requests = Loan.query.filter_by(status='return_requested').order_by(Loan.loan_date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Thống kê
+    total_return_requests = Loan.query.filter_by(status='return_requested').count()
+    total_processed_today = Loan.query.filter(
+        Loan.status == 'returned',
+        Loan.return_date >= datetime.utcnow().date()
+    ).count()
+    
+    return render_template('admin/return_requests.html', 
+                         return_requests=return_requests,
+                         total_return_requests=total_return_requests,
+                         total_processed_today=total_processed_today)
+
+@admin_bp.route('/admin/extend-requests')
+@login_required
+@admin_required
+def extend_requests():
+    """Trang duyệt yêu cầu gia hạn sách"""
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    
+    # Lấy danh sách yêu cầu gia hạn chờ duyệt
+    extend_requests = Loan.query.filter_by(status='extend_requested').order_by(Loan.loan_date.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Thống kê
+    total_extend_requests = Loan.query.filter_by(status='extend_requested').count()
+    total_approved_today = Loan.query.filter(
+        Loan.status == 'borrowed',
+        Loan.loan_date >= datetime.utcnow().date()
+    ).count()
+    
+    from datetime import timedelta
+    
+    return render_template('admin/extend_requests.html', 
+                         extend_requests=extend_requests,
+                         total_extend_requests=total_extend_requests,
+                         total_approved_today=total_approved_today,
+                         timedelta=timedelta)
+
+@admin_bp.route('/admin/return-requests/approve/<int:loan_id>', methods=['POST'])
+@login_required
+@admin_required
+def approve_return_request(loan_id):
+    """Duyệt yêu cầu trả sách"""
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'return_requested':
+        flash('Yêu cầu này không còn chờ duyệt!', 'warning')
+        return redirect(url_for('admin.return_requests'))
+    
+    try:
+        # Duyệt yêu cầu trả sách
+        loan.approve_return()
+        db.session.commit()
+        
+        flash(f'Đã duyệt yêu cầu trả sách "{loan.book.title}" của {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi duyệt yêu cầu!', 'danger')
+    
+    return redirect(url_for('admin.return_requests'))
+
+@admin_bp.route('/admin/return-requests/reject/<int:loan_id>', methods=['POST'])
+@login_required
+@admin_required
+def reject_return_request(loan_id):
+    """Từ chối yêu cầu trả sách"""
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'return_requested':
+        flash('Yêu cầu này không còn chờ duyệt!', 'warning')
+        return redirect(url_for('admin.return_requests'))
+    
+    try:
+        # Từ chối yêu cầu trả sách
+        loan.reject_return()
+        db.session.commit()
+        
+        flash(f'Đã từ chối yêu cầu trả sách "{loan.book.title}" của {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi từ chối yêu cầu!', 'danger')
+    
+    return redirect(url_for('admin.return_requests'))
+
+@admin_bp.route('/admin/extend-requests/approve/<int:loan_id>', methods=['POST'])
+@login_required
+@admin_required
+def approve_extend_request(loan_id):
+    """Duyệt yêu cầu gia hạn sách"""
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'extend_requested':
+        flash('Yêu cầu này không còn chờ duyệt!', 'warning')
+        return redirect(url_for('admin.extend_requests'))
+    
+    try:
+        # Duyệt yêu cầu gia hạn
+        loan.approve_extension()
+        db.session.commit()
+        
+        flash(f'Đã duyệt yêu cầu gia hạn sách "{loan.book.title}" của {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi duyệt yêu cầu!', 'danger')
+    
+    return redirect(url_for('admin.extend_requests'))
+
+@admin_bp.route('/admin/extend-requests/reject/<int:loan_id>', methods=['POST'])
+@login_required
+@admin_required
+def reject_extend_request(loan_id):
+    """Từ chối yêu cầu gia hạn sách"""
+    loan = Loan.query.get_or_404(loan_id)
+    
+    if loan.status != 'extend_requested':
+        flash('Yêu cầu này không còn chờ duyệt!', 'warning')
+        return redirect(url_for('admin.extend_requests'))
+    
+    try:
+        # Từ chối yêu cầu gia hạn
+        loan.reject_extension()
+        db.session.commit()
+        
+        flash(f'Đã từ chối yêu cầu gia hạn sách "{loan.book.title}" của {loan.user.full_name}!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi từ chối yêu cầu!', 'danger')
+    
+    return redirect(url_for('admin.extend_requests'))
+
+@admin_bp.route('/admin/api/stats')
+@login_required
+@admin_required
+def api_stats():
+    """API endpoint để lấy thống kê real-time"""
+    try:
+        pending_loans = Loan.query.filter_by(status='pending').count()
+        return_requests = Loan.query.filter_by(status='return_requested').count()
+        extend_requests = Loan.query.filter_by(status='extend_requested').count()
+        overdue_loans = Loan.query.filter(
+            Loan.status == 'borrowed',
+            Loan.due_date < datetime.utcnow()
+        ).count()
+        
+        return {
+            'pending_loans': pending_loans,
+            'return_requests': return_requests,
+            'extend_requests': extend_requests,
+            'overdue_loans': overdue_loans,
+            'total_requests': pending_loans + return_requests + extend_requests,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {'error': str(e)}, 500 

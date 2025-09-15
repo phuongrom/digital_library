@@ -20,30 +20,87 @@ def index():
 
 @books_bp.route('/search')
 def search():
+    # Get all search parameters
     query = request.args.get('q', '')
     category = request.args.get('category', '')
+    author = request.args.get('author', '')
+    publisher = request.args.get('publisher', '')
+    year = request.args.get('year', '')
+    availability = request.args.get('availability', '')
+    sort = request.args.get('sort', 'title')
     page = request.args.get('page', 1, type=int)
     per_page = 12
     
+    # Start with base query
     search_query = Book.query.filter_by(is_active=True)
     
+    # Text search (searches across multiple fields)
     if query:
         search_query = search_query.filter(
             or_(
                 Book.title.ilike(f'%{query}%'),
                 Book.author.ilike(f'%{query}%'),
                 Book.isbn.ilike(f'%{query}%'),
-                Book.description.ilike(f'%{query}%')
+                Book.description.ilike(f'%{query}%'),
+                Book.publisher.ilike(f'%{query}%'),
+                Book.publication_year.ilike(f'%{query}%')
             )
         )
     
+    # Category filter
     if category:
         search_query = search_query.filter(Book.category == category)
     
-    books = search_query.order_by(Book.title).paginate(
+    # Author filter
+    if author:
+        search_query = search_query.filter(Book.author.ilike(f'%{author}%'))
+    
+    # Publisher filter
+    if publisher:
+        search_query = search_query.filter(Book.publisher.ilike(f'%{publisher}%'))
+    
+    # Year filter
+    if year:
+        try:
+            year_int = int(year)
+            search_query = search_query.filter(Book.publication_year == year_int)
+        except ValueError:
+            pass  # Ignore invalid year
+    
+    # Availability filter
+    if availability:
+        if availability == 'available':
+            # Books with available copies > 0
+            search_query = search_query.filter(Book.available_copies > 0)
+        elif availability == 'limited':
+            # Books with 1-2 available copies
+            search_query = search_query.filter(Book.available_copies.between(1, 2))
+        elif availability == 'unavailable':
+            # Books with no available copies
+            search_query = search_query.filter(Book.available_copies == 0)
+    
+    # Sorting
+    if sort == 'title':
+        search_query = search_query.order_by(Book.title.asc())
+    elif sort == 'title_desc':
+        search_query = search_query.order_by(Book.title.desc())
+    elif sort == 'author':
+        search_query = search_query.order_by(Book.author.asc())
+    elif sort == 'year':
+        search_query = search_query.order_by(Book.publication_year.asc())
+    elif sort == 'year_desc':
+        search_query = search_query.order_by(Book.publication_year.desc())
+    elif sort == 'created':
+        search_query = search_query.order_by(Book.created_at.desc())
+    else:
+        search_query = search_query.order_by(Book.title.asc())
+    
+    # Pagination
+    books = search_query.paginate(
         page=page, per_page=per_page, error_out=False
     )
     
+    # Get all categories for filter dropdown
     categories = db.session.query(Book.category).filter(
         Book.category.isnot(None), Book.is_active == True
     ).distinct().all()
@@ -53,6 +110,11 @@ def search():
                          books=books, 
                          query=query, 
                          category=category,
+                         author=author,
+                         publisher=publisher,
+                         year=year,
+                         availability=availability,
+                         sort=sort,
                          categories=categories)
 
 @books_bp.route('/book/<int:book_id>')
@@ -63,9 +125,8 @@ def book_detail(book_id):
     if current_user.is_authenticated:
         current_loan = Loan.query.filter_by(
             user_id=current_user.id,
-            book_id=book_id,
-            status='borrowed'
-        ).first()
+            book_id=book_id
+        ).filter(Loan.status.in_(['pending', 'borrowed'])).first()
     
     related_books = []
     if book.category:
@@ -88,12 +149,14 @@ def borrow_book(book_id):
     
     existing_loan = Loan.query.filter_by(
         user_id=current_user.id,
-        book_id=book_id,
-        status='borrowed'
-    ).first()
+        book_id=book_id
+    ).filter(Loan.status.in_(['pending', 'borrowed'])).first()
     
     if existing_loan:
-        flash('Bạn đã mượn sách này rồi!', 'warning')
+        if existing_loan.status == 'pending':
+            flash('Bạn đã gửi yêu cầu mượn sách này rồi! Vui lòng chờ admin duyệt.', 'warning')
+        else:
+            flash('Bạn đã mượn sách này rồi!', 'warning')
         return redirect(url_for('books.book_detail', book_id=book_id))
     
     from datetime import datetime, timedelta
@@ -101,18 +164,17 @@ def borrow_book(book_id):
     new_loan = Loan(
         user_id=current_user.id,
         book_id=book_id,
-        due_date=datetime.now() + timedelta(days=14)
+        due_date=datetime.now() + timedelta(days=14),
+        status='pending'  # Tạo loan với status pending
     )
-    
-    book.borrow_book()
     
     try:
         db.session.add(new_loan)
         db.session.commit()
-        flash('Mượn sách thành công! Vui lòng trả sách trong vòng 14 ngày.', 'success')
+        flash('Yêu cầu mượn sách đã được gửi! Vui lòng chờ admin duyệt.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('Có lỗi xảy ra khi mượn sách!', 'danger')
+        flash('Có lỗi xảy ra khi gửi yêu cầu mượn sách!', 'danger')
     
     return redirect(url_for('books.book_detail', book_id=book_id))
 

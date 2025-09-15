@@ -15,6 +15,7 @@ class Book(db.Model):
     total_copies = db.Column(db.Integer, default=1)
     available_copies = db.Column(db.Integer, default=1)  # Giữ lại để tương thích
     location = db.Column(db.String(100))
+    image_url = db.Column(db.String(255))  # Đường dẫn đến hình ảnh sách
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     

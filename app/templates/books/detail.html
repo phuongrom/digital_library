@@ -19,7 +19,13 @@
     <!-- Book Header -->
     <div class="book-header">
         <div class="book-cover">
-            <i class="bi bi-book"></i>
+            {% if book.image_url %}
+                <img src="{{ url_for('static', filename=book.image_url) }}" 
+                     alt="{{ book.title }}" 
+                     class="book-cover-image">
+            {% else %}
+                <i class="bi bi-book"></i>
+            {% endif %}
         </div>
         <div class="book-title-section">
             <h1 class="book-title">{{ book.title }}</h1>

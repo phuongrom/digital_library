@@ -72,6 +72,20 @@
                 </div>
                 
                 <div class="book-card-body">
+                    <!-- Book Image -->
+                    <div class="book-image-container mb-3">
+                        {% if book.image_url %}
+                            <img src="{{ url_for('static', filename=book.image_url) }}" 
+                                 alt="{{ book.title }}" 
+                                 class="book-image">
+                        {% else %}
+                            <div class="book-image-placeholder">
+                                <i class="bi bi-book"></i>
+                                <small>Chưa có hình</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                     <h5 class="book-title">
                         <a href="{{ url_for('books.book_detail', book_id=book.id) }}">
                             {{ book.title }}

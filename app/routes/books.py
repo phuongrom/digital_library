@@ -4,6 +4,7 @@ from app.models.book import Book
 from app.models.loan import Loan
 from app import db
 from sqlalchemy import or_
+from app.utils.image_handler import save_image, delete_image
 
 books_bp = Blueprint('books', __name__)
 
@@ -200,6 +201,16 @@ def add_book():
             flash('ISBN này đã tồn tại!', 'danger')
             return render_template('books/add.html')
         
+        # Xử lý upload hình ảnh
+        image_url = None
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename:
+                image_url = save_image(image_file, 'books')
+                if not image_url:
+                    flash('Lỗi khi upload hình ảnh! Vui lòng thử lại.', 'danger')
+                    return render_template('books/add.html')
+        
         try:
             new_book = Book(
                 isbn=isbn,
@@ -211,7 +222,8 @@ def add_book():
                 description=description,
                 total_copies=int(total_copies),
                 available_copies=int(total_copies),
-                location=location
+                location=location,
+                image_url=image_url
             )
             
             db.session.add(new_book)
@@ -220,6 +232,9 @@ def add_book():
             return redirect(url_for('books.admin_manage_books'))
         except Exception as e:
             db.session.rollback()
+            # Xóa hình ảnh nếu có lỗi
+            if image_url:
+                delete_image(image_url)
             flash('Có lỗi xảy ra khi thêm sách!', 'danger')
     
     return render_template('books/add.html')
@@ -243,6 +258,22 @@ def edit_book(book_id):
         book.description = request.form.get('description')
         book.total_copies = int(request.form.get('total_copies'))
         book.location = request.form.get('location')
+        
+        # Xử lý upload hình ảnh mới
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename:
+                # Xóa hình ảnh cũ nếu có
+                if book.image_url:
+                    delete_image(book.image_url)
+                
+                # Lưu hình ảnh mới
+                new_image_url = save_image(image_file, 'books')
+                if new_image_url:
+                    book.image_url = new_image_url
+                else:
+                    flash('Lỗi khi upload hình ảnh! Vui lòng thử lại.', 'danger')
+                    return render_template('books/edit.html', book=book)
         
         try:
             db.session.commit()

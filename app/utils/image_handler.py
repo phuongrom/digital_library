@@ -78,3 +78,4 @@ def get_default_image(folder):
     elif folder == 'users':
         return 'images/default-user.jpg'
     return None
+

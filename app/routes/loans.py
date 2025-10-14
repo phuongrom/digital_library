@@ -29,6 +29,21 @@ def my_loans():
         Loan.status == 'borrowed'
     ).count()
     
+    pending_count = Loan.query.filter(
+        Loan.user_id == current_user.id,
+        Loan.status == 'pending'
+    ).count()
+    
+    return_requested_count = Loan.query.filter(
+        Loan.user_id == current_user.id,
+        Loan.status == 'return_requested'
+    ).count()
+    
+    extend_requested_count = Loan.query.filter(
+        Loan.user_id == current_user.id,
+        Loan.status == 'extend_requested'
+    ).count()
+    
     returned_count = Loan.query.filter(
         Loan.user_id == current_user.id,
         Loan.status == 'returned'
@@ -44,6 +59,9 @@ def my_loans():
                          loans=loans, 
                          overdue_count=overdue_count,
                          borrowed_count=borrowed_count,
+                         pending_count=pending_count,
+                         return_requested_count=return_requested_count,
+                         extend_requested_count=extend_requested_count,
                          returned_count=returned_count,
                          overdue_loans_list=overdue_loans_list)
 
@@ -90,18 +108,20 @@ def return_book(loan_id):
         flash('Sách này đã được trả rồi.', 'error')
         return redirect(url_for('loans.my_loans'))
     
-    # Trả sách
-    loan.return_book()
+    if loan.status != 'borrowed':
+        flash('Sách này không ở trạng thái có thể trả.', 'error')
+        return redirect(url_for('loans.my_loans'))
     
-    db.session.commit()
+    # Yêu cầu trả sách (chờ admin duyệt)
+    loan.request_return()
     
-    # Cập nhật availability sau khi commit
-    book = Book.query.get(loan.book_id)
-    if book:
-        book.update_availability()
+    try:
         db.session.commit()
+        flash(f'Yêu cầu trả sách "{loan.book.title}" đã được gửi! Vui lòng chờ admin duyệt.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi gửi yêu cầu trả sách!', 'danger')
     
-    flash('Bạn đã trả sách thành công!', 'success')
     return redirect(url_for('loans.my_loans'))
 
 @loans_bp.route('/overdue')
@@ -135,10 +155,24 @@ def extend_loan(loan_id):
         flash('Sách này đã được trả rồi.', 'error')
         return redirect(url_for('loans.my_loans'))
     
-    loan.due_date += timedelta(days=7)
-    db.session.commit()
+    if loan.status != 'borrowed':
+        flash('Sách này không ở trạng thái có thể gia hạn.', 'error')
+        return redirect(url_for('loans.my_loans'))
     
-    flash('Gia hạn sách thành công! Hạn trả mới: ' + loan.due_date.strftime('%d/%m/%Y'), 'success')
+    if loan.is_overdue():
+        flash('Không thể gia hạn sách đã quá hạn.', 'error')
+        return redirect(url_for('loans.my_loans'))
+    
+    # Yêu cầu gia hạn (chờ admin duyệt)
+    loan.request_extension()
+    
+    try:
+        db.session.commit()
+        flash(f'Yêu cầu gia hạn sách "{loan.book.title}" đã được gửi! Vui lòng chờ admin duyệt.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Có lỗi xảy ra khi gửi yêu cầu gia hạn!', 'danger')
+    
     return redirect(url_for('loans.my_loans'))
 
 @loans_bp.route('/statistics')

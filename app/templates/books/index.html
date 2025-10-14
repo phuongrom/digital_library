@@ -26,32 +26,24 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="search-container">
-            <form action="{{ url_for('books.search') }}" method="GET">
+            <form action="{{ url_for('books.search') }}" method="GET" id="homeSearchForm">
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-8">
                         <div class="search-input-wrapper">
                             <input type="text" class="form-control search-input" name="q" 
-                                   placeholder="Tìm kiếm theo tên sách, tác giả, ISBN..." 
+                                   placeholder="Tìm kiếm theo tên sách, tác giả, ISBN, nhà xuất bản..." 
                                    value="{{ request.args.get('q', '') }}">
                         </div>
                     </div>
-
                     <div class="col-md-4">
-                        <div class="search-select-wrapper">
-                            <select class="form-select search-select" name="category" style="height: 62px">
-                                <option value="">Tất cả danh mục</option>
-                                <option value="Văn học" {% if request.args.get('category') == 'Văn học' %}selected{% endif %}>Văn học</option>
-                                <option value="Khoa học" {% if request.args.get('category') == 'Khoa học' %}selected{% endif %}>Khoa học</option>
-                                <option value="Công nghệ" {% if request.args.get('category') == 'Công nghệ' %}selected{% endif %}>Công nghệ</option>
-                                <option value="Lịch sử" {% if request.args.get('category') == 'Lịch sử' %}selected{% endif %}>Lịch sử</option>
-                                <option value="Kinh tế" {% if request.args.get('category') == 'Kinh tế' %}selected{% endif %}>Kinh tế</option>
-                            </select>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary search-btn flex-grow-1">
+                                <i class="bi bi-search"></i> Tìm kiếm
+                            </button>
+                            <a href="{{ url_for('books.search') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-funnel"></i> Nâng cao
+                            </a>
                         </div>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary search-btn w-100">
-                            <i class="bi bi-search"></i> Tìm kiếm
-                        </button>
                     </div>
                 </div>
             </form>
@@ -80,6 +72,20 @@
                 </div>
                 
                 <div class="book-card-body">
+                    <!-- Book Image -->
+                    <div class="book-image-container mb-3">
+                        {% if book.image_url %}
+                            <img src="{{ url_for('static', filename=book.image_url) }}" 
+                                 alt="{{ book.title }}" 
+                                 class="book-image">
+                        {% else %}
+                            <div class="book-image-placeholder">
+                                <i class="bi bi-book"></i>
+                                <small>Chưa có hình</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                     <h5 class="book-title">
                         <a href="{{ url_for('books.book_detail', book_id=book.id) }}">
                             {{ book.title }}

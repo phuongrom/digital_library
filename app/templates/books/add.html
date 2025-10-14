@@ -13,7 +13,7 @@
             <p>Điền thông tin sách để thêm vào thư viện</p>
         </div>
         
-        <form method="POST" class="add-book-form">
+        <form method="POST" class="add-book-form" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -46,7 +46,7 @@
                         <label for="category" class="form-label">
                             <i class="bi bi-tags"></i> Thể loại *
                         </label>
-                        <select class="form-select" id="category" name="category" required>
+                        <select class="form-select" id="category" name="category" required style="height: 60px;">
                             <option value="">Chọn thể loại</option>
                             <option value="Văn học">Văn học</option>
                             <option value="Kinh tế">Kinh tế</option>
@@ -103,6 +103,20 @@
                 </label>
                 <textarea class="form-input" id="description" name="description" rows="3" 
                           placeholder="Mô tả ngắn gọn về nội dung sách..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="image" class="form-label">
+                    <i class="bi bi-image"></i> Hình ảnh bìa sách
+                </label>
+                <input type="file" class="form-input" id="image" name="image" 
+                       accept="image/*" onchange="previewImage(this)">
+                <div class="image-preview mt-2" id="imagePreview" style="display: none;">
+                    <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                </div>
+                <small class="form-text text-muted">
+                    Chọn hình ảnh bìa sách (PNG, JPG, JPEG, GIF, WebP). Kích thước tối đa 16MB.
+                </small>
             </div>
             
             <div class="form-actions">
@@ -164,5 +178,24 @@ document.getElementById('isbn').addEventListener('input', function() {
     
     this.value = value;
 });
+
+// Image preview function
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
 </script>
 {% endblock %} 

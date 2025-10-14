@@ -73,6 +73,11 @@
                                 </a>
                                 <ul class="dropdown-menu">
                                     <li><a class="dropdown-item" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.loan_requests') }}"><i class="bi bi-clock-history"></i> Duyệt yêu cầu mượn sách</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.return_requests') }}"><i class="bi bi-arrow-return-left"></i> Duyệt yêu cầu trả sách</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.extend_requests') }}"><i class="bi bi-arrow-clockwise"></i> Duyệt yêu cầu gia hạn</a></li>
+                                    <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{{ url_for('admin.manage_users') }}"><i class="bi bi-people-fill"></i> Quản lý Users</a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('books.admin_manage_books') }}"><i class="bi bi-book-fill"></i> Quản lý Sách</a></li>
                                     <li><a class="dropdown-item" href="{{ url_for('loans.admin_manage_loans') }}"><i class="bi bi-arrow-left-right"></i> Quản lý Mượn trả</a></li>

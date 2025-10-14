@@ -4,6 +4,7 @@ from app.models.book import Book
 from app.models.loan import Loan
 from app import db
 from sqlalchemy import or_
+from app.utils.image_handler import save_image, delete_image
 
 books_bp = Blueprint('books', __name__)
 
@@ -20,30 +21,87 @@ def index():
 
 @books_bp.route('/search')
 def search():
+    # Get all search parameters
     query = request.args.get('q', '')
     category = request.args.get('category', '')
+    author = request.args.get('author', '')
+    publisher = request.args.get('publisher', '')
+    year = request.args.get('year', '')
+    availability = request.args.get('availability', '')
+    sort = request.args.get('sort', 'title')
     page = request.args.get('page', 1, type=int)
     per_page = 12
     
+    # Start with base query
     search_query = Book.query.filter_by(is_active=True)
     
+    # Text search (searches across multiple fields)
     if query:
         search_query = search_query.filter(
             or_(
                 Book.title.ilike(f'%{query}%'),
                 Book.author.ilike(f'%{query}%'),
                 Book.isbn.ilike(f'%{query}%'),
-                Book.description.ilike(f'%{query}%')
+                Book.description.ilike(f'%{query}%'),
+                Book.publisher.ilike(f'%{query}%'),
+                Book.publication_year.ilike(f'%{query}%')
             )
         )
     
+    # Category filter
     if category:
         search_query = search_query.filter(Book.category == category)
     
-    books = search_query.order_by(Book.title).paginate(
+    # Author filter
+    if author:
+        search_query = search_query.filter(Book.author.ilike(f'%{author}%'))
+    
+    # Publisher filter
+    if publisher:
+        search_query = search_query.filter(Book.publisher.ilike(f'%{publisher}%'))
+    
+    # Year filter
+    if year:
+        try:
+            year_int = int(year)
+            search_query = search_query.filter(Book.publication_year == year_int)
+        except ValueError:
+            pass  # Ignore invalid year
+    
+    # Availability filter
+    if availability:
+        if availability == 'available':
+            # Books with available copies > 0
+            search_query = search_query.filter(Book.available_copies > 0)
+        elif availability == 'limited':
+            # Books with 1-2 available copies
+            search_query = search_query.filter(Book.available_copies.between(1, 2))
+        elif availability == 'unavailable':
+            # Books with no available copies
+            search_query = search_query.filter(Book.available_copies == 0)
+    
+    # Sorting
+    if sort == 'title':
+        search_query = search_query.order_by(Book.title.asc())
+    elif sort == 'title_desc':
+        search_query = search_query.order_by(Book.title.desc())
+    elif sort == 'author':
+        search_query = search_query.order_by(Book.author.asc())
+    elif sort == 'year':
+        search_query = search_query.order_by(Book.publication_year.asc())
+    elif sort == 'year_desc':
+        search_query = search_query.order_by(Book.publication_year.desc())
+    elif sort == 'created':
+        search_query = search_query.order_by(Book.created_at.desc())
+    else:
+        search_query = search_query.order_by(Book.title.asc())
+    
+    # Pagination
+    books = search_query.paginate(
         page=page, per_page=per_page, error_out=False
     )
     
+    # Get all categories for filter dropdown
     categories = db.session.query(Book.category).filter(
         Book.category.isnot(None), Book.is_active == True
     ).distinct().all()
@@ -53,6 +111,11 @@ def search():
                          books=books, 
                          query=query, 
                          category=category,
+                         author=author,
+                         publisher=publisher,
+                         year=year,
+                         availability=availability,
+                         sort=sort,
                          categories=categories)
 
 @books_bp.route('/book/<int:book_id>')
@@ -63,9 +126,8 @@ def book_detail(book_id):
     if current_user.is_authenticated:
         current_loan = Loan.query.filter_by(
             user_id=current_user.id,
-            book_id=book_id,
-            status='borrowed'
-        ).first()
+            book_id=book_id
+        ).filter(Loan.status.in_(['pending', 'borrowed'])).first()
     
     related_books = []
     if book.category:
@@ -88,12 +150,14 @@ def borrow_book(book_id):
     
     existing_loan = Loan.query.filter_by(
         user_id=current_user.id,
-        book_id=book_id,
-        status='borrowed'
-    ).first()
+        book_id=book_id
+    ).filter(Loan.status.in_(['pending', 'borrowed'])).first()
     
     if existing_loan:
-        flash('Bạn đã mượn sách này rồi!', 'warning')
+        if existing_loan.status == 'pending':
+            flash('Bạn đã gửi yêu cầu mượn sách này rồi! Vui lòng chờ admin duyệt.', 'warning')
+        else:
+            flash('Bạn đã mượn sách này rồi!', 'warning')
         return redirect(url_for('books.book_detail', book_id=book_id))
     
     from datetime import datetime, timedelta
@@ -101,18 +165,17 @@ def borrow_book(book_id):
     new_loan = Loan(
         user_id=current_user.id,
         book_id=book_id,
-        due_date=datetime.now() + timedelta(days=14)
+        due_date=datetime.now() + timedelta(days=14),
+        status='pending'  # Tạo loan với status pending
     )
-    
-    book.borrow_book()
     
     try:
         db.session.add(new_loan)
         db.session.commit()
-        flash('Mượn sách thành công! Vui lòng trả sách trong vòng 14 ngày.', 'success')
+        flash('Yêu cầu mượn sách đã được gửi! Vui lòng chờ admin duyệt.', 'success')
     except Exception as e:
         db.session.rollback()
-        flash('Có lỗi xảy ra khi mượn sách!', 'danger')
+        flash('Có lỗi xảy ra khi gửi yêu cầu mượn sách!', 'danger')
     
     return redirect(url_for('books.book_detail', book_id=book_id))
 
@@ -138,6 +201,16 @@ def add_book():
             flash('ISBN này đã tồn tại!', 'danger')
             return render_template('books/add.html')
         
+        # Xử lý upload hình ảnh
+        image_url = None
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename:
+                image_url = save_image(image_file, 'books')
+                if not image_url:
+                    flash('Lỗi khi upload hình ảnh! Vui lòng thử lại.', 'danger')
+                    return render_template('books/add.html')
+        
         try:
             new_book = Book(
                 isbn=isbn,
@@ -149,7 +222,8 @@ def add_book():
                 description=description,
                 total_copies=int(total_copies),
                 available_copies=int(total_copies),
-                location=location
+                location=location,
+                image_url=image_url
             )
             
             db.session.add(new_book)
@@ -158,6 +232,9 @@ def add_book():
             return redirect(url_for('books.admin_manage_books'))
         except Exception as e:
             db.session.rollback()
+            # Xóa hình ảnh nếu có lỗi
+            if image_url:
+                delete_image(image_url)
             flash('Có lỗi xảy ra khi thêm sách!', 'danger')
     
     return render_template('books/add.html')
@@ -181,6 +258,22 @@ def edit_book(book_id):
         book.description = request.form.get('description')
         book.total_copies = int(request.form.get('total_copies'))
         book.location = request.form.get('location')
+        
+        # Xử lý upload hình ảnh mới
+        if 'image' in request.files:
+            image_file = request.files['image']
+            if image_file and image_file.filename:
+                # Xóa hình ảnh cũ nếu có
+                if book.image_url:
+                    delete_image(book.image_url)
+                
+                # Lưu hình ảnh mới
+                new_image_url = save_image(image_file, 'books')
+                if new_image_url:
+                    book.image_url = new_image_url
+                else:
+                    flash('Lỗi khi upload hình ảnh! Vui lòng thử lại.', 'danger')
+                    return render_template('books/edit.html', book=book)
         
         try:
             db.session.commit()

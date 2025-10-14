@@ -13,7 +13,7 @@
             <p>Cập nhật thông tin sách "{{ book.title }}"</p>
         </div>
         
-        <form method="POST" class="edit-book-form">
+        <form method="POST" class="edit-book-form" enctype="multipart/form-data">
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -46,7 +46,7 @@
                         <label for="category" class="form-label">
                             <i class="bi bi-tags"></i> Thể loại *
                         </label>
-                        <select class="form-select" id="category" name="category" required>
+                        <select class="form-select" id="category" name="category" required style="height: 60px;">
                             <option value="">Chọn thể loại</option>
                             <option value="Văn học" {% if book.category == 'Văn học' %}selected{% endif %}>Văn học</option>
                             <option value="Kinh tế" {% if book.category == 'Kinh tế' %}selected{% endif %}>Kinh tế</option>
@@ -105,6 +105,32 @@
                           placeholder="Mô tả ngắn gọn về nội dung sách...">{{ book.description or '' }}</textarea>
             </div>
             
+            <div class="form-group">
+                <label for="image" class="form-label">
+                    <i class="bi bi-image"></i> Hình ảnh bìa sách
+                </label>
+                
+                <!-- Hiển thị hình ảnh hiện tại -->
+                {% if book.image_url %}
+                <div class="current-image mb-3">
+                    <img src="{{ url_for('static', filename=book.image_url) }}" 
+                         alt="Hình ảnh hiện tại" 
+                         style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 2px solid #e2e8f0;">
+                    <p class="text-muted mt-2">Hình ảnh hiện tại</p>
+                </div>
+                {% endif %}
+                
+                <input type="file" class="form-input" id="image" name="image" 
+                       accept="image/*" onchange="previewImage(this)">
+                <div class="image-preview mt-2" id="imagePreview" style="display: none;">
+                    <img id="previewImg" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                    <p class="text-muted mt-2">Hình ảnh mới</p>
+                </div>
+                <small class="form-text text-muted">
+                    Chọn hình ảnh mới để thay thế (PNG, JPG, JPEG, GIF, WebP). Kích thước tối đa 16MB.
+                </small>
+            </div>
+            
             <div class="form-actions">
                 <a href="{{ url_for('books.admin_manage_books') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle"></i> Hủy
@@ -116,4 +142,37 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Image preview function
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    this.classList.add('was-validated');
+});
+</script>
 {% endblock %} 

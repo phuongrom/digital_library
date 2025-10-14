@@ -15,27 +15,105 @@
 <div class="row mb-4">
     <div class="col-12">
         <div class="search-container">
-            <form method="GET" action="{{ url_for('books.search') }}">
-                <div class="row g-3">
-                    <div class="col-md-6">
+            <form method="GET" action="{{ url_for('books.search') }}" id="searchForm">
+                <!-- Advanced Filters -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-funnel"></i> Bộ lọc nâng cao
+                            </h6>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedFilters()">
+                                <i class="bi bi-chevron-down" id="filterToggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="advancedFilters" style="display: none;">
+                        <div class="row g-3">
+                            <!-- Category Filter -->
+                            <div class="col-md-3">
+                                <label for="category" class="form-label">Danh mục</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Tất cả danh mục</option>
+                                    {% for cat in categories %}
+                                        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
+                                            {{ cat }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Author Filter -->
+                            <div class="col-md-3">
+                                <label for="author" class="form-label">Tác giả</label>
+                                <input type="text" class="form-control" id="author" name="author" 
+                                       value="{{ author }}" placeholder="Tên tác giả">
+                            </div>
+
+                            <!-- Publisher Filter -->
+                            <div class="col-md-3">
+                                <label for="publisher" class="form-label">Nhà xuất bản</label>
+                                <input type="text" class="form-control" id="publisher" name="publisher" 
+                                       value="{{ publisher }}" placeholder="Nhà xuất bản">
+                            </div>
+
+                            <!-- Year Filter -->
+                            <div class="col-md-3">
+                                <label for="year" class="form-label">Năm xuất bản</label>
+                                <input type="number" class="form-control" id="year" name="year" 
+                                       value="{{ year }}" placeholder="Năm" min="1900" max="2024">
+                            </div>
+
+                            <!-- Availability Filter -->
+                            <div class="col-md-3">
+                                <label for="availability" class="form-label">Tình trạng</label>
+                                <select class="form-select" id="availability" name="availability">
+                                    <option value="">Tất cả</option>
+                                    <option value="available" {% if availability == 'available' %}selected{% endif %}>Có sẵn</option>
+                                    <option value="limited" {% if availability == 'limited' %}selected{% endif %}>Còn ít</option>
+                                    <option value="unavailable" {% if availability == 'unavailable' %}selected{% endif %}>Hết sách</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort Filter -->
+                            <div class="col-md-3">
+                                <label for="sort" class="form-label">Sắp xếp</label>
+                                <select class="form-select" id="sort" name="sort">
+                                    <option value="title" {% if sort == 'title' %}selected{% endif %}>Tên sách A-Z</option>
+                                    <option value="title_desc" {% if sort == 'title_desc' %}selected{% endif %}>Tên sách Z-A</option>
+                                    <option value="author" {% if sort == 'author' %}selected{% endif %}>Tác giả A-Z</option>
+                                    <option value="year" {% if sort == 'year' %}selected{% endif %}>Năm xuất bản (cũ nhất)</option>
+                                    <option value="year_desc" {% if sort == 'year_desc' %}selected{% endif %}>Năm xuất bản (mới nhất)</option>
+                                    <option value="created" {% if sort == 'created' %}selected{% endif %}>Mới nhất</option>
+                                </select>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="col-md-6">
+                                <div class="d-flex gap-2 mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-search"></i> Tìm kiếm
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                        <i class="bi bi-arrow-clockwise"></i> Xóa bộ lọc
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" onclick="saveSearch()">
+                                        <i class="bi bi-bookmark"></i> Lưu tìm kiếm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Basic Search -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
                         <div class="search-input-wrapper">
                             <input type="text" class="form-control search-input" id="q" name="q" 
-                                   value="{{ query }}" placeholder="Nhập tên sách, tác giả, ISBN...">
+                                   value="{{ query }}" placeholder="Nhập tên sách, tác giả, ISBN, nhà xuất bản...">
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="search-select-wrapper">
-                            <select class="form-select search-select" id="category" name="category" style="height: 62px">
-                                <option value="">Tất cả danh mục</option>
-                                {% for cat in categories %}
-                                    <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>
-                                        {{ cat }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
                         <button type="submit" class="btn btn-primary search-btn w-100">
                             <i class="bi bi-search"></i> Tìm kiếm
                         </button>
@@ -47,7 +125,7 @@
 </div>
 
 <!-- Search results header -->
-{% if query or category %}
+{% if query or category or author or publisher or year or availability %}
     <div class="row mb-3">
         <div class="col-12">
             <div class="search-results-header">
@@ -67,17 +145,67 @@
                     {% endif %}
                 </div>
                 
-                {% if query or category %}
-                    <p class="search-query-info">
-                        {% if query and category %}
-                            Tìm kiếm: "<strong>{{ query }}</strong>" trong danh mục "<strong>{{ category }}</strong>"
-                        {% elif query %}
-                            Tìm kiếm: "<strong>{{ query }}</strong>"
-                        {% elif category %}
-                            Danh mục: "<strong>{{ category }}</strong>"
+                <!-- Active Filters Display -->
+                <div class="active-filters mb-3">
+                    <h6 class="mb-2">Bộ lọc đang áp dụng:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if query %}
+                        <span class="badge bg-primary">
+                            <i class="bi bi-search me-1"></i>
+                            Từ khóa: "{{ query }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('q')"></button>
+                        </span>
                         {% endif %}
-                    </p>
-                {% endif %}
+                        
+                        {% if category %}
+                        <span class="badge bg-info">
+                            <i class="bi bi-collection me-1"></i>
+                            Danh mục: "{{ category }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('category')"></button>
+                        </span>
+                        {% endif %}
+                        
+                        {% if author %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-person me-1"></i>
+                            Tác giả: "{{ author }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('author')"></button>
+                        </span>
+                        {% endif %}
+                        
+                        {% if publisher %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-building me-1"></i>
+                            NXB: "{{ publisher }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('publisher')"></button>
+                        </span>
+                        {% endif %}
+                        
+                        {% if year %}
+                        <span class="badge bg-secondary">
+                            <i class="bi bi-calendar me-1"></i>
+                            Năm: "{{ year }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('year')"></button>
+                        </span>
+                        {% endif %}
+                        
+                        {% if availability %}
+                        <span class="badge bg-dark">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Tình trạng: "{{ availability }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('availability')"></button>
+                        </span>
+                        {% endif %}
+                        
+                        {% if sort %}
+                        <span class="badge bg-outline-secondary">
+                            <i class="bi bi-sort-alpha-down me-1"></i>
+                            Sắp xếp: "{{ sort }}"
+                            <button type="button" class="btn-close btn-close-white ms-2" onclick="removeFilter('sort')"></button>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -97,6 +225,20 @@
                 </div>
                 
                 <div class="book-card-body">
+                    <!-- Book Image -->
+                    <div class="book-image-container mb-3">
+                        {% if book.image_url %}
+                            <img src="{{ url_for('static', filename=book.image_url) }}" 
+                                 alt="{{ book.title }}" 
+                                 class="book-image">
+                        {% else %}
+                            <div class="book-image-placeholder">
+                                <i class="bi bi-book"></i>
+                                <small>Chưa có hình</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
                     <h5 class="book-title">
                         <a href="{{ url_for('books.book_detail', book_id=book.id) }}">
                             {{ book.title }}
@@ -140,7 +282,7 @@
         <ul class="pagination justify-content-center">
             {% if books.has_prev %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('books.search', q=query, category=category, page=books.prev_num) }}">
+                    <a class="page-link" href="{{ url_for('books.search', q=query, category=category, author=author, publisher=publisher, year=year, availability=availability, sort=sort, page=books.prev_num) }}">
                         <i class="bi bi-chevron-left"></i> Trước
                     </a>
                 </li>
@@ -154,7 +296,7 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="{{ url_for('books.search', q=query, category=category, page=page_num) }}">{{ page_num }}</a>
+                            <a class="page-link" href="{{ url_for('books.search', q=query, category=category, author=author, publisher=publisher, year=year, availability=availability, sort=sort, page=page_num) }}">{{ page_num }}</a>
                         </li>
                     {% endif %}
                 {% else %}
@@ -166,7 +308,7 @@
             
             {% if books.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="{{ url_for('books.search', q=query, category=category, page=books.next_num) }}">
+                    <a class="page-link" href="{{ url_for('books.search', q=query, category=category, author=author, publisher=publisher, year=year, availability=availability, sort=sort, page=books.next_num) }}">
                         Sau <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>
@@ -175,102 +317,268 @@
     </nav>
     {% endif %}
     
-{% elif query or category %}
-    <!-- No results -->
-    <div class="empty-state">
-        <div class="empty-icon">
-            <i class="bi bi-search"></i>
-        </div>
-        <h3 class="empty-title">Không tìm thấy kết quả</h3>
-        <p class="empty-description">
-            {% if query and category %}
-                Không có sách nào phù hợp với từ khóa "{{ query }}" trong danh mục "{{ category }}"
-            {% elif query %}
-                Không có sách nào phù hợp với từ khóa "{{ query }}"
-            {% elif category %}
-                Không có sách nào trong danh mục "{{ category }}"
-            {% endif %}
-        </p>
-        
-        <div class="search-suggestions">
-            <h5>Gợi ý tìm kiếm:</h5>
-            <ul class="suggestion-list">
-                <li>• Kiểm tra chính tả của từ khóa</li>
-                <li>• Thử từ khóa ngắn hơn</li>
-                <li>• Thử từ khóa khác</li>
-                <li>• Bỏ bớt filter danh mục</li>
-            </ul>
-        </div>
-        
-        <div class="empty-actions">
-            <a href="{{ url_for('books.index') }}" class="btn btn-primary me-2">
-                <i class="bi bi-house"></i> Về trang chủ
-            </a>
-            <a href="{{ url_for('books.categories') }}" class="btn btn-outline-primary">
-                <i class="bi bi-collection"></i> Xem tất cả danh mục
-            </a>
-        </div>
-    </div>
-{% else %}
-    <!-- Initial state -->
-    <div class="empty-state">
-        <div class="empty-icon">
-            <i class="bi bi-search"></i>
-        </div>
-        <h3 class="empty-title">Bắt đầu tìm kiếm</h3>
-        <p class="empty-description">Nhập từ khóa hoặc chọn danh mục để tìm kiếm sách</p>
-        
-        <!-- Popular categories -->
-        <div class="search-suggestions">
-            <h5>Danh mục phổ biến:</h5>
-            <div class="suggestion-buttons">
-                {% for cat in categories[:6] %}
-                    <a href="{{ url_for('books.search', category=cat) }}" class="btn btn-outline-secondary btn-sm">
-                        {{ cat }}
-                    </a>
-                {% endfor %}
+    {% elif query or category %}
+        <!-- No results -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3 class="empty-title">Không tìm thấy kết quả</h3>
+            <p class="empty-description">
+                {% if query and category %}
+                    Không có sách nào phù hợp với từ khóa "{{ query }}" trong danh mục "{{ category }}"
+                {% elif query %}
+                    Không có sách nào phù hợp với từ khóa "{{ query }}"
+                {% elif category %}
+                    Không có sách nào trong danh mục "{{ category }}"
+                {% endif %}
+            </p>
+            
+            <div class="search-suggestions">
+                <h5>Gợi ý tìm kiếm:</h5>
+                <ul class="suggestion-list">
+                    <li>• Kiểm tra chính tả của từ khóa</li>
+                    <li>• Thử từ khóa ngắn hơn</li>
+                    <li>• Thử từ khóa khác</li>
+                    <li>• Bỏ bớt filter danh mục</li>
+                </ul>
+            </div>
+            
+            <div class="empty-actions">
+                <a href="{{ url_for('books.index') }}" class="btn btn-primary me-2">
+                    <i class="bi bi-house"></i> Về trang chủ
+                </a>
+                <a href="{{ url_for('books.categories') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-collection"></i> Xem tất cả danh mục
+                </a>
             </div>
         </div>
-        
-        <!-- Popular authors -->
-        <div class="search-suggestions">
-            <h5>Tác giả nổi tiếng:</h5>
-            <div class="suggestion-buttons">
-                <a href="{{ url_for('books.search', q='J.K. Rowling') }}" class="btn btn-outline-info btn-sm">J.K. Rowling</a>
-                <a href="{{ url_for('books.search', q='Dale Carnegie') }}" class="btn btn-outline-info btn-sm">Dale Carnegie</a>
-                <a href="{{ url_for('books.search', q='Paulo Coelho') }}" class="btn btn-outline-info btn-sm">Paulo Coelho</a>
-                <a href="{{ url_for('books.search', q='Yuval Noah Harari') }}" class="btn btn-outline-info btn-sm">Yuval Noah Harari</a>
+    {% else %}
+        <!-- Initial state -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="bi bi-search"></i>
+            </div>
+            <h3 class="empty-title">Bắt đầu tìm kiếm</h3>
+            <p class="empty-description">Nhập từ khóa hoặc chọn danh mục để tìm kiếm sách</p>
+            
+            <!-- Popular categories -->
+            <div class="search-suggestions">
+                <h5>Danh mục phổ biến:</h5>
+                <div class="suggestion-buttons">
+                    {% for cat in categories[:6] %}
+                        <a href="{{ url_for('books.search', category=cat) }}" class="btn btn-outline-secondary btn-sm">
+                            {{ cat }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Popular authors -->
+            <div class="search-suggestions">
+                <h5>Tác giả nổi tiếng:</h5>
+                <div class="suggestion-buttons">
+                    <a href="{{ url_for('books.search', q='J.K. Rowling') }}" class="btn btn-outline-info btn-sm">J.K. Rowling</a>
+                    <a href="{{ url_for('books.search', q='Dale Carnegie') }}" class="btn btn-outline-info btn-sm">Dale Carnegie</a>
+                    <a href="{{ url_for('books.search', q='Paulo Coelho') }}" class="btn btn-outline-info btn-sm">Paulo Coelho</a>
+                    <a href="{{ url_for('books.search', q='Yuval Noah Harari') }}" class="btn btn-outline-info btn-sm">Yuval Noah Harari</a>
+                </div>
             </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
 
-<!-- Search tips -->
-{% if books.total > 0 %}
-<div class="search-tips-section">
-    <div class="card bg-light">
-        <div class="card-body">
-            <h6 class="card-title">
-                <i class="bi bi-lightbulb"></i> Mẹo tìm kiếm
-            </h6>
-            <div class="row">
-                <div class="col-md-6">
-                    <ul class="tips-list">
-                        <li>Sử dụng từ khóa ngắn gọn để có nhiều kết quả hơn</li>
-                        <li>Tìm theo tên tác giả để xem tất cả sách của họ</li>
-                        <li>Kết hợp từ khóa với danh mục để lọc kết quả</li>
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <ul class="tips-list">
-                        <li>Tìm theo ISBN để tìm chính xác một cuốn sách</li>
-                        <li>Sử dụng dấu ngoặc kép cho cụm từ chính xác</li>
-                        <li>Xem chi tiết sách để biết thêm thông tin</li>
-                    </ul>
-                </div>
+<script>
+// Toggle advanced filters
+function toggleAdvancedFilters() {
+    const filters = document.getElementById('advancedFilters');
+    const icon = document.getElementById('filterToggleIcon');
+    
+    if (filters.style.display === 'none') {
+        filters.style.display = 'block';
+        icon.className = 'bi bi-chevron-up';
+    } else {
+        filters.style.display = 'none';
+        icon.className = 'bi bi-chevron-down';
+    }
+}
+
+// Clear all filters
+function clearFilters() {
+    document.getElementById('q').value = '';
+    document.getElementById('category').value = '';
+    document.getElementById('author').value = '';
+    document.getElementById('publisher').value = '';
+    document.getElementById('year').value = '';
+    document.getElementById('availability').value = '';
+    document.getElementById('sort').value = 'title';
+    
+    // Submit form to refresh results
+    document.getElementById('searchForm').submit();
+}
+
+// Remove specific filter
+function removeFilter(filterName) {
+    const element = document.getElementById(filterName);
+    if (element) {
+        element.value = '';
+        document.getElementById('searchForm').submit();
+    }
+}
+
+// Save search to localStorage
+function saveSearch() {
+    const formData = new FormData(document.getElementById('searchForm'));
+    const searchParams = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (value.trim() !== '') {
+            searchParams[key] = value;
+        }
+    }
+    
+    const savedSearches = JSON.parse(localStorage.getItem('savedSearches') || '[]');
+    const searchId = Date.now().toString();
+    
+    savedSearches.unshift({
+        id: searchId,
+        name: `Tìm kiếm ${new Date().toLocaleString()}`,
+        params: searchParams,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Keep only last 10 searches
+    if (savedSearches.length > 10) {
+        savedSearches.splice(10);
+    }
+    
+    localStorage.setItem('savedSearches', JSON.stringify(savedSearches));
+    
+    // Show success message
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="bi bi-check"></i> Đã lưu!';
+    button.classList.remove('btn-outline-info');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-info');
+    }, 2000);
+}
+
+// Load saved searches
+function loadSavedSearches() {
+    const savedSearches = JSON.parse(localStorage.getItem('savedSearches') || '[]');
+    
+    if (savedSearches.length > 0) {
+        // Add saved searches dropdown to the form
+        const form = document.getElementById('searchForm');
+        const savedSearchesDiv = document.createElement('div');
+        savedSearchesDiv.className = 'saved-searches mb-3';
+        savedSearchesDiv.innerHTML = `
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-bookmark"></i> Tìm kiếm đã lưu
+                </button>
+                <ul class="dropdown-menu">
+                    ${savedSearches.map(search => `
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="loadSearch('${search.id}')">
+                                <div class="fw-bold">${search.name}</div>
+                                <small class="text-muted">${new Date(search.timestamp).toLocaleString()}</small>
+                            </a>
+                        </li>
+                    `).join('')}
+                </ul>
             </div>
-        </div>
-    </div>
-</div>
-{% endif %}
+        `;
+        
+        form.insertBefore(savedSearchesDiv, form.firstChild);
+    }
+}
+
+// Load specific saved search
+function loadSearch(searchId) {
+    const savedSearches = JSON.parse(localStorage.getItem('savedSearches') || '[]');
+    const search = savedSearches.find(s => s.id === searchId);
+    
+    if (search) {
+        // Fill form with saved search parameters
+        Object.keys(search.params).forEach(key => {
+            const element = document.getElementById(key);
+            if (element) {
+                element.value = search.params[key];
+            }
+        });
+        
+        // Submit form
+        document.getElementById('searchForm').submit();
+    }
+}
+
+// Auto-submit on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    loadSavedSearches();
+    
+    // Auto-submit when filters change (with debounce)
+    let timeoutId;
+    const filterInputs = document.querySelectorAll('#advancedFilters input, #advancedFilters select');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                document.getElementById('searchForm').submit();
+            }, 500);
+        });
+    });
+});
+
+// Show advanced filters if any filter is active
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasFilters = urlParams.has('category') || urlParams.has('author') || 
+                      urlParams.has('publisher') || urlParams.has('year') || 
+                      urlParams.has('availability') || urlParams.has('sort');
+    
+    if (hasFilters) {
+        document.getElementById('advancedFilters').style.display = 'block';
+        document.getElementById('filterToggleIcon').className = 'bi bi-chevron-up';
+    }
+});
+</script>
+
+<style>
+.active-filters .badge {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.saved-searches {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.search-container .card {
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.search-container .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn-close {
+    font-size: 0.75rem;
+    padding: 0.25rem;
+}
+
+.btn-close:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+</style>
 {% endblock %} 

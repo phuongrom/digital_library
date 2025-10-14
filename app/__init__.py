@@ -15,6 +15,11 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///library.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
+    # Cấu hình upload file
+    app.config['UPLOAD_FOLDER'] = 'app/static/uploads'
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+    app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    
     db.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db)

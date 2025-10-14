@@ -43,6 +43,24 @@
     <div class="col-md-3">
         <div class="card text-center bg-warning text-dark">
             <div class="card-body">
+                <i class="bi bi-clock-history" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">{{ pending_count }}</h5>
+                <p class="card-text mb-0">Chờ duyệt mượn</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <i class="bi bi-arrow-clockwise" style="font-size: 2rem;"></i>
+                <h5 class="card-title mt-2">{{ return_requested_count + extend_requested_count }}</h5>
+                <p class="card-text mb-0">Yêu cầu khác</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-danger text-white">
+            <div class="card-body">
                 <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
                 <h5 class="card-title mt-2">{{ overdue_count }}</h5>
                 <p class="card-text mb-0">Quá hạn</p>
@@ -112,7 +130,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge {% if loan.status == 'borrowed' %}bg-primary{% elif loan.status == 'returned' %}bg-success{% else %}bg-warning{% endif %}">
+                                <span class="badge {% if loan.status == 'borrowed' %}bg-primary{% elif loan.status == 'returned' %}bg-success{% elif loan.status == 'pending' %}bg-warning{% elif loan.status == 'return_requested' %}bg-info{% elif loan.status == 'extend_requested' %}bg-info{% elif loan.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
                                     {{ loan.get_status_display() }}
                                 </span>
                             </td>
@@ -139,6 +157,26 @@
                                                 <i class="bi bi-arrow-return-left"></i>
                                             </button>
                                         </form>
+                                    {% elif loan.status == 'pending' %}
+                                        <span class="text-muted">
+                                            <i class="bi bi-clock-history me-1"></i>
+                                            Chờ duyệt mượn
+                                        </span>
+                                    {% elif loan.status == 'return_requested' %}
+                                        <span class="text-info">
+                                            <i class="bi bi-arrow-return-left me-1"></i>
+                                            Chờ duyệt trả
+                                        </span>
+                                    {% elif loan.status == 'extend_requested' %}
+                                        <span class="text-info">
+                                            <i class="bi bi-arrow-clockwise me-1"></i>
+                                            Chờ duyệt gia hạn
+                                        </span>
+                                    {% elif loan.status == 'rejected' %}
+                                        <span class="text-danger">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Đã từ chối
+                                        </span>
                                     {% endif %}
                                     
                                     <a href="{{ url_for('books.book_detail', book_id=loan.book.id) }}" class="btn btn-outline-primary btn-sm" title="Xem chi tiết">
